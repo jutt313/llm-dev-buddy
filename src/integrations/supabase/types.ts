@@ -523,8 +523,10 @@ export type Database = {
           id: string
           is_active: boolean
           is_default: boolean | null
+          last_test_at: string | null
           last_used_at: string | null
           provider_id: string
+          test_status: string | null
           updated_at: string
           user_id: string
         }
@@ -536,8 +538,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_default?: boolean | null
+          last_test_at?: string | null
           last_used_at?: string | null
           provider_id: string
+          test_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -549,8 +553,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_default?: boolean | null
+          last_test_at?: string | null
           last_used_at?: string | null
           provider_id?: string
+          test_status?: string | null
           updated_at?: string
           user_id?: string
         }

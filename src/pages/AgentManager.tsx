@@ -1,5 +1,5 @@
 
-import { ArchMasterManager } from "@/components/agents/ArchMasterManager";
+import ArchMasterManager from "@/components/agents/ArchMasterManager";
 
 const AgentManager = () => {
   return (

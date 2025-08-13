@@ -37,6 +37,12 @@ const AGENT_DETAILS = {
   20: { name: "ArchMaster", role: "Ultimate Multi-Agent Manager" }
 };
 
+// Type for metadata that contains agent_id
+interface AgentMetadata {
+  agent_id?: number;
+  [key: string]: any;
+}
+
 const AgentSystemStatus = () => {
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -67,11 +73,20 @@ const AgentSystemStatus = () => {
         .eq('session_type', 'agent_management')
         .eq('status', 'active');
 
+      // Safely extract agent IDs from metadata
+      const agentIds = new Set<number>();
+      analytics?.forEach(item => {
+        const metadata = item.metadata as AgentMetadata;
+        if (metadata && typeof metadata === 'object' && metadata.agent_id) {
+          agentIds.add(metadata.agent_id);
+        }
+      });
+
       return {
         analytics: analytics || [],
         activeSessions: sessions || [],
         totalAgents: 20,
-        activeAgents: analytics?.length > 0 ? new Set(analytics.map(a => a.metadata?.agent_id)).size : 0
+        activeAgents: agentIds.size
       };
     },
     enabled: !!user?.id,
@@ -160,7 +175,12 @@ const AgentSystemStatus = () => {
             <CardContent className="space-y-3">
               {team.agents.map(agentId => {
                 const agent = AGENT_DETAILS[agentId as keyof typeof AGENT_DETAILS];
-                const isActive = systemStatus?.analytics?.some(a => a.metadata?.agent_id === agentId);
+                
+                // Safely check if agent is active
+                const isActive = systemStatus?.analytics?.some(item => {
+                  const metadata = item.metadata as AgentMetadata;
+                  return metadata && typeof metadata === 'object' && metadata.agent_id === agentId;
+                }) || false;
                 
                 return (
                   <div key={agentId} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">

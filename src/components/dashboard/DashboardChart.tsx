@@ -41,7 +41,7 @@ const DashboardChart = ({
   title, 
   data, 
   type, 
-  color = "hsl(var(--primary))", 
+  color = "#06b6d4", 
   description 
 }: DashboardChartProps) => {
   const renderChart = () => {
@@ -53,12 +53,12 @@ const DashboardChart = ({
               dataKey="name" 
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 12, fill: '#94a3b8' }}
             />
             <YAxis 
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 12, fill: '#94a3b8' }}
             />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Line 
@@ -78,12 +78,12 @@ const DashboardChart = ({
               dataKey="name" 
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 12, fill: '#94a3b8' }}
             />
             <YAxis 
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 12, fill: '#94a3b8' }}
             />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Area 
@@ -103,12 +103,12 @@ const DashboardChart = ({
               dataKey="name" 
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 12, fill: '#94a3b8' }}
             />
             <YAxis 
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 12, fill: '#94a3b8' }}
             />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Bar dataKey="value" fill={color} radius={[6, 6, 0, 0]} />
@@ -120,19 +120,19 @@ const DashboardChart = ({
   };
 
   return (
-    <Card className="bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 rounded-2xl overflow-hidden">
+    <Card className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl hover:bg-white/10 hover:border-white/20 transition-all duration-300">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-foreground">
+        <CardTitle className="text-lg font-semibold text-white">
           {title}
         </CardTitle>
         {description && (
-          <p className="text-sm text-muted-foreground/80">
+          <p className="text-sm text-slate-400">
             {description}
           </p>
         )}
       </CardHeader>
       <CardContent className="pb-6">
-        <ChartContainer config={chartConfig} className="h-[240px] w-full">
+        <ChartContainer config={chartConfig} className="h-[280px] w-full">
           {renderChart()}
         </ChartContainer>
       </CardContent>

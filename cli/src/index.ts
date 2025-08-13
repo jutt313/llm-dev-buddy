@@ -1,6 +1,4 @@
-
 #!/usr/bin/env node
-
 import { Command } from 'commander';
 import { AuthCommand } from './commands/auth';
 import { AgentCommand } from './commands/agent';

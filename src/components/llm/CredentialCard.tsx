@@ -9,7 +9,7 @@ interface CredentialCardProps {
     provider: {
       display_name: string;
     };
-    test_status: string;
+    test_status: string | null;
     is_active: boolean;
     is_default: boolean;
     last_used_at: string | null;
@@ -39,6 +39,17 @@ export const CredentialCard = ({ credential, onClick, isExpanded }: CredentialCa
         return 'text-red-400 bg-red-500/20 border-red-500/30';
       default:
         return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (credential.test_status) {
+      case 'passed':
+        return 'Verified';
+      case 'failed':
+        return 'Failed';
+      default:
+        return 'Pending';
     }
   };
 
@@ -79,7 +90,7 @@ export const CredentialCard = ({ credential, onClick, isExpanded }: CredentialCa
           
           <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${getStatusColor()}`}>
             {getStatusIcon()}
-            <span className="text-sm font-medium capitalize">{credential.test_status}</span>
+            <span className="text-sm font-medium">{getStatusText()}</span>
           </div>
 
           <div className="text-right">

@@ -15,7 +15,7 @@ interface LLMCredential {
   provider_id: string;
   is_active: boolean;
   is_default: boolean;
-  test_status: string;
+  test_status: string | null;
   last_used_at: string | null;
   created_at: string;
   provider: {
@@ -46,8 +46,20 @@ export const LLMCredentialsDialog = ({ open, onOpenChange }: LLMCredentialsDialo
       const { data, error } = await supabase
         .from('user_llm_credentials')
         .select(`
-          *,
-          provider:llm_providers(*)
+          id,
+          credential_name,
+          provider_id,
+          is_active,
+          is_default,
+          test_status,
+          last_used_at,
+          created_at,
+          provider:llm_providers(
+            id,
+            name,
+            display_name,
+            icon_url
+          )
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });

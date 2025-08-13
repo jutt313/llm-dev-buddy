@@ -34,7 +34,7 @@ const AGENTS = {
 
 AgentCommand
   .command('list')
-  .description('List all available agents')
+  .description('List all available agents (managed by ArchMaster)')
   .action(() => {
     if (!config.isAuthenticated()) {
       console.log(chalk.red('Please login first: codexi auth login'));
@@ -54,99 +54,6 @@ AgentCommand
       ]);
     });
 
-    console.log('\n' + table(data, {
-      border: {
-        topBody: '─',
-        topJoin: '┬',
-        topLeft: '┌',
-        topRight: '┐',
-        bottomBody: '─',
-        bottomJoin: '┴',
-        bottomLeft: '└',
-        bottomRight: '┘',
-        bodyLeft: '│',
-        bodyRight: '│',
-        bodyJoin: '│',
-        joinBody: '─',
-        joinLeft: '├',
-        joinRight: '┤',
-        joinJoin: '┼'
-      }
-    }));
-  });
-
-AgentCommand
-  .command('chat <agent-id> <message>')
-  .description('Send a message to a specific agent')
-  .option('-c, --context <context>', 'Additional context for the agent')
-  .action(async (agentId: string, message: string, options) => {
-    if (!config.isAuthenticated()) {
-      console.log(chalk.red('Please login first: codexi auth login'));
-      return;
-    }
-
-    const id = parseInt(agentId);
-    if (isNaN(id) || id < 1 || id > 20) {
-      console.log(chalk.red('Invalid agent ID. Use 1-20.'));
-      return;
-    }
-
-    const agent = AGENTS[id as keyof typeof AGENTS];
-    const spinner = ora(`Sending message to ${chalk.bold(agent.name)}...`).start();
-
-    try {
-      let result;
-      if (id === 20) {
-        // ArchMaster
-        result = await api.callArchMaster(message);
-      } else {
-        // Individual agent
-        result = await api.callAgent(id, message, options.context);
-      }
-
-      if (result.success) {
-        spinner.succeed(chalk.green(`Response from ${chalk.bold(agent.name)}:`));
-        console.log('\n' + chalk.white(result.data.response));
-        
-        if (result.data.tokens_used) {
-          console.log(chalk.gray(`\nTokens used: ${result.data.tokens_used}`));
-        }
-      } else {
-        spinner.fail(chalk.red(`Error: ${result.error}`));
-      }
-    } catch (error: any) {
-      spinner.fail(chalk.red(`Error: ${error.message}`));
-    }
-  });
-
-AgentCommand
-  .command('archmaster <message>')
-  .description('Send a task to ArchMaster for delegation')
-  .action(async (message: string) => {
-    if (!config.isAuthenticated()) {
-      console.log(chalk.red('Please login first: codexi auth login'));
-      return;
-    }
-
-    const spinner = ora('Sending task to ArchMaster...').start();
-
-    try {
-      const result = await api.callArchMaster(message);
-
-      if (result.success) {
-        spinner.succeed(chalk.green('Response from ArchMaster:'));
-        console.log('\n' + chalk.white(result.data.response));
-        
-        if (result.data.tokens_used) {
-          console.log(chalk.gray(`\nTokens used: ${result.data.tokens_used}`));
-        }
-        if (result.data.session_id) {
-          console.log(chalk.gray(`Session ID: ${result.data.session_id}`));
-        }
-      } else {
-        spinner.fail(chalk.red(`Error: ${result.error}`));
-      }
-    } catch (error: any) {
-      spinner.fail(chalk.red(`Error: ${error.message}`));
-    }
+    console.log('\n' + table(data));
+    console.log(chalk.yellow('\nNote: All agents are managed by ArchMaster. Use "codexi chat" to interact.'));
   });

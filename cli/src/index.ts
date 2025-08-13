@@ -7,7 +7,10 @@ import { AgentCommand } from './commands/agent';
 import { ProjectCommand } from './commands/project';
 import { LLMCommand } from './commands/llm';
 import { ConfigCommand } from './commands/config';
+import { api } from './services/api';
+import { config } from './config';
 import chalk from 'chalk';
+import ora from 'ora';
 
 const program = new Command();
 
@@ -25,6 +28,40 @@ ${chalk.cyan('╚═════════════════════
 `;
 
 program.addHelpText('beforeAll', banner);
+
+// Main chat command - talks to ArchMaster
+program
+  .command('chat <message>')
+  .description('Send a message to ArchMaster (manages all 20 agents)')
+  .option('-s, --session <sessionId>', 'Continue existing session')
+  .action(async (message: string, options) => {
+    if (!config.isAuthenticated()) {
+      console.log(chalk.red('Please login first: codexi auth login'));
+      return;
+    }
+
+    const spinner = ora('Sending message to ArchMaster...').start();
+
+    try {
+      const result = await api.callArchMaster(message, options.session);
+
+      if (result.success) {
+        spinner.succeed(chalk.green('Response from ArchMaster:'));
+        console.log('\n' + chalk.white(result.data.response));
+        
+        if (result.data.tokens_used) {
+          console.log(chalk.gray(`\nTokens used: ${result.data.tokens_used}`));
+        }
+        if (result.data.session_id) {
+          console.log(chalk.gray(`Session ID: ${result.data.session_id}`));
+        }
+      } else {
+        spinner.fail(chalk.red(`Error: ${result.error}`));
+      }
+    } catch (error: any) {
+      spinner.fail(chalk.red(`Error: ${error.message}`));
+    }
+  });
 
 // Register commands
 program.addCommand(AuthCommand);

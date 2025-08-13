@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -296,15 +295,17 @@ serve(async (req) => {
 AVAILABLE AGENT CAPABILITIES:
 ${agentCapabilitiesContext}
 
-AGENT DELEGATION:
-When delegating to agents #1-19, you can call them individually using their dedicated edge functions:
-${Object.entries(AGENT_FUNCTION_MAPPING).map(([id, func]) => `Agent #${id}: ${func}`).join('\n')}
+DELEGATION PROTOCOL:
+When you need to delegate a task to a specific agent, respond with:
+"DELEGATE_TO_AGENT: {agent_id} | TASK: {specific_task_description}"
+
+Example: "DELEGATE_TO_AGENT: 1 | TASK: Design a microservices architecture for an e-commerce platform"
 
 Current LLM Mode: ${llm_mode === 'codexi' ? 'CodeXI (OpenAI GPT-4o-mini)' : `Custom (${llmConfig.provider})`}
 Session ID: ${chatSession.id}
 User ID: ${validatedUserId}`;
 
-    // Call LLM
+    // Call LLM for initial analysis
     const response = await fetch(llmConfig.base_url, {
       method: 'POST',
       headers: {
@@ -327,7 +328,43 @@ User ID: ${validatedUserId}`;
     }
 
     const data = await response.json();
-    const archmasterResponse = data.choices[0].message.content;
+    let archmasterResponse = data.choices[0].message.content;
+
+    // Check if ArchMaster wants to delegate
+    if (archmasterResponse.includes('DELEGATE_TO_AGENT:')) {
+      const delegationMatch = archmasterResponse.match(/DELEGATE_TO_AGENT:\s*(\d+)\s*\|\s*TASK:\s*(.+)/);
+      
+      if (delegationMatch) {
+        const [, agentId, taskDescription] = delegationMatch;
+        const agentFunction = AGENT_FUNCTION_MAPPING[parseInt(agentId)];
+        
+        if (agentFunction) {
+          try {
+            console.log(`Delegating to Agent #${agentId}: ${agentFunction}`);
+            
+            // Call the specific agent
+            const agentResponse = await supabase.functions.invoke(agentFunction, {
+              body: {
+                task: taskDescription.trim(),
+                token,
+                llm_mode,
+                delegated_by: 'ArchMaster'
+              }
+            });
+
+            if (agentResponse.data?.response) {
+              // Combine ArchMaster's analysis with agent's response
+              archmasterResponse = `${archmasterResponse}\n\n---AGENT RESPONSE---\n${agentResponse.data.response}`;
+            } else {
+              archmasterResponse += `\n\nDelegation to Agent #${agentId} failed. I'll handle this myself.`;
+            }
+          } catch (error) {
+            console.error(`Delegation failed:`, error);
+            archmasterResponse += `\n\nDelegation to Agent #${agentId} failed. I'll handle this myself.`;
+          }
+        }
+      }
+    }
 
     // Store ArchMaster response
     const { data: messageData } = await supabase

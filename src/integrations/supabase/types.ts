@@ -234,6 +234,78 @@ export type Database = {
           },
         ]
       }
+      cli_aliases: {
+        Row: {
+          alias_name: string
+          command: string
+          created_at: string
+          description: string | null
+          id: string
+          updated_at: string
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          alias_name: string
+          command: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          alias_name?: string
+          command?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cli_command_history: {
+        Row: {
+          args: Json | null
+          command: string
+          created_at: string
+          error_message: string | null
+          execution_status: string | null
+          execution_time_ms: number | null
+          id: string
+          output: string | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          args?: Json | null
+          command: string
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          output?: string | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          args?: Json | null
+          command?: string
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          output?: string | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cli_commands: {
         Row: {
           command: string
@@ -296,6 +368,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cli_user_preferences: {
+        Row: {
+          auto_complete: boolean | null
+          command_history_limit: number | null
+          created_at: string
+          default_llm: string | null
+          id: string
+          preferences: Json | null
+          session_timeout_minutes: number | null
+          terminal_theme: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_complete?: boolean | null
+          command_history_limit?: number | null
+          created_at?: string
+          default_llm?: string | null
+          id?: string
+          preferences?: Json | null
+          session_timeout_minutes?: number | null
+          terminal_theme?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_complete?: boolean | null
+          command_history_limit?: number | null
+          created_at?: string
+          default_llm?: string | null
+          id?: string
+          preferences?: Json | null
+          session_timeout_minutes?: number | null
+          terminal_theme?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cli_user_sessions: {
+        Row: {
+          context: Json | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          last_command: string | null
+          session_name: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_command?: string | null
+          session_name?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_command?: string | null
+          session_name?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       integrations: {
         Row: {

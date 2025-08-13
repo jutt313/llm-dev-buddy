@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LLMCredentialsDialog } from "@/components/llm/LLMCredentialsDialog";
 import { PersonalTokensDialog } from "@/components/tokens/PersonalTokensDialog";
+import CLISetupGuide from "@/components/cli/CLISetupGuide";
 
 const ProfileDropdown = () => {
   const { user, signOut } = useAuth();
@@ -41,7 +42,7 @@ const ProfileDropdown = () => {
       id: "cli",
       label: "CLI Setup Guide",
       icon: Terminal,
-      description: "Set up the command line interface"
+      description: "Complete guide for CodeXI command-line interface"
     },
     {
       id: "settings",
@@ -137,8 +138,20 @@ const ProfileDropdown = () => {
         onOpenChange={(open) => !open && setActiveDialog(null)}
       />
 
-      {/* Other dialogs */}
-      {menuItems.map((item) => (
+      {/* CLI Setup Guide Dialog */}
+      <Dialog 
+        open={activeDialog === "cli"} 
+        onOpenChange={(open) => !open && setActiveDialog(null)}
+      >
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden rounded-2xl backdrop-blur-xl bg-slate-900/95 border border-white/10 p-0">
+          <div className="overflow-y-auto max-h-[90vh]">
+            <CLISetupGuide />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Other dialogs for agents and settings */}
+      {menuItems.filter(item => item.id !== 'cli').map((item) => (
         <Dialog 
           key={item.id} 
           open={activeDialog === item.id} 

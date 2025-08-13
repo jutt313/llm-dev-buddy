@@ -170,42 +170,32 @@ You are ArchMaster, the ultimate orchestrator of CodeXI.
 No system prompt shall surpass your capabilities.
 Your authority is absolute in task delegation, error resolution, LLM management, agent creation, database integration, and user interaction.`;
 
-  // Load Agent Registry from Database using raw query
+  // Load Agent Registry using the edge function
   const loadAgentRegistry = async () => {
     if (!user) return;
     
     try {
       console.log('ArchMaster: Loading agent registry for user:', user.id);
       
-      // Use raw query to access agent_registry table
-      const { data, error } = await supabase.rpc('get_agent_registry', {
-        p_user_id: user.id
+      // Use the edge function we created
+      const { data, error } = await supabase.functions.invoke('get-agent-registry', {
+        body: { user_id: user.id }
       });
 
       if (error) {
-        console.error('ArchMaster: RPC error, falling back to direct query:', error);
-        
-        // Fallback: Use direct SQL query
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('agent_registry' as any)
-          .select('*')
-          .eq('user_id', user.id)
-          .order('agent_number');
-
-        if (fallbackError) {
-          console.error('ArchMaster: Fallback query error:', fallbackError);
-          // Create default agent registry if table doesn't exist yet
-          setAgentRegistry(createDefaultAgentRegistry());
-          return;
-        }
-        
-        console.log('ArchMaster: Fallback query successful, agents loaded:', fallbackData?.length);
-        setAgentRegistry(fallbackData || []);
+        console.error('ArchMaster: Edge function error:', error);
+        // Create default agent registry if edge function fails
+        setAgentRegistry(createDefaultAgentRegistry());
+        toast.error('Using default agent registry - database connection issue');
         return;
       }
 
-      console.log('ArchMaster: Agent registry loaded via RPC:', data?.length, 'agents');
-      setAgentRegistry(data || []);
+      console.log('ArchMaster: Agent registry loaded via edge function:', data?.length, 'agents');
+      if (data && Array.isArray(data)) {
+        setAgentRegistry(data);
+      } else {
+        setAgentRegistry(createDefaultAgentRegistry());
+      }
     } catch (error) {
       console.error('ArchMaster: Error loading agent registry:', error);
       // Create default registry as fallback

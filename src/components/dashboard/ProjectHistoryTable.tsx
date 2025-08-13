@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
-import { Eye, MessageSquare, Terminal, Folder } from "lucide-react";
+import { Eye, MessageSquare, Terminal, Folder, Activity } from "lucide-react";
 
 interface ProjectHistoryItem {
   id: string;
@@ -40,7 +40,7 @@ const ProjectHistoryTable = ({ data }: ProjectHistoryTableProps) => {
       case "project":
         return <Folder className="h-4 w-4" />;
       default:
-        return <Eye className="h-4 w-4" />;
+        return <Activity className="h-4 w-4" />;
     }
   };
 
@@ -48,44 +48,45 @@ const ProjectHistoryTable = ({ data }: ProjectHistoryTableProps) => {
     switch (status.toLowerCase()) {
       case "completed":
       case "active":
-        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";
+        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-900/30";
       case "pending":
       case "running":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900/30";
       case "failed":
       case "error":
-        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400";
+        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 border-red-200 dark:border-red-900/30";
       default:
-        return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400";
+        return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700";
     }
   };
 
   return (
     <>
-      <Card className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+      <Card className="bg-card/80 backdrop-blur-sm border-border/50 hover:border-primary/20 transition-all duration-300 rounded-2xl overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" />
             Recent Activity
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">Type</TableHead>
+              <TableRow className="border-border/50 hover:bg-transparent">
+                <TableHead className="w-12 pl-6">Type</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead className="w-12">Actions</TableHead>
+                <TableHead className="w-12 pr-6">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
-                    <div className="text-slate-500 dark:text-slate-400">
-                      <Eye className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>No recent activity found</p>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={5} className="text-center py-12">
+                    <div className="text-muted-foreground/60">
+                      <Activity className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg font-medium mb-1">No recent activity found</p>
                       <p className="text-sm">Start a chat or create a project to see your activity here</p>
                     </div>
                   </TableCell>
@@ -94,34 +95,34 @@ const ProjectHistoryTable = ({ data }: ProjectHistoryTableProps) => {
                 data.map((item) => (
                   <TableRow 
                     key={item.id} 
-                    className="hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    className="hover:bg-accent/5 cursor-pointer border-border/30 transition-colors"
                     onClick={() => setSelectedItem(item)}
                   >
-                    <TableCell>
-                      <div className="flex items-center justify-center p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <TableCell className="pl-6">
+                      <div className="flex items-center justify-center p-2.5 bg-primary/10 rounded-xl border border-primary/20">
                         {getTypeIcon(item.type)}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-slate-900 dark:text-slate-100">
+                        <p className="font-medium text-foreground mb-1">
                           {item.title}
                         </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-xs">
+                        <p className="text-sm text-muted-foreground/70 truncate max-w-xs">
                           {item.description}
                         </p>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(item.status)}>
+                      <Badge className={`${getStatusColor(item.status)} font-medium`}>
                         {item.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-slate-600 dark:text-slate-400">
+                    <TableCell className="text-muted-foreground">
                       {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                     </TableCell>
-                    <TableCell>
-                      <Eye className="h-4 w-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" />
+                    <TableCell className="pr-6">
+                      <Eye className="h-4 w-4 text-muted-foreground/60 hover:text-primary transition-colors" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -133,7 +134,7 @@ const ProjectHistoryTable = ({ data }: ProjectHistoryTableProps) => {
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selectedItem && getTypeIcon(selectedItem.type)}
@@ -143,25 +144,25 @@ const ProjectHistoryTable = ({ data }: ProjectHistoryTableProps) => {
           {selectedItem && (
             <div className="space-y-4">
               <div>
-                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Description</h4>
-                <p className="text-slate-600 dark:text-slate-400">{selectedItem.description}</p>
+                <h4 className="font-medium text-foreground mb-2">Description</h4>
+                <p className="text-muted-foreground">{selectedItem.description}</p>
               </div>
               <div>
-                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Status</h4>
+                <h4 className="font-medium text-foreground mb-2">Status</h4>
                 <Badge className={getStatusColor(selectedItem.status)}>
                   {selectedItem.status}
                 </Badge>
               </div>
               <div>
-                <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Created</h4>
-                <p className="text-slate-600 dark:text-slate-400">
+                <h4 className="font-medium text-foreground mb-2">Created</h4>
+                <p className="text-muted-foreground">
                   {new Date(selectedItem.created_at).toLocaleString()}
                 </p>
               </div>
               {selectedItem.metadata && Object.keys(selectedItem.metadata).length > 0 && (
                 <div>
-                  <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Additional Details</h4>
-                  <pre className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg text-sm overflow-x-auto">
+                  <h4 className="font-medium text-foreground mb-2">Additional Details</h4>
+                  <pre className="bg-accent/50 p-3 rounded-lg text-sm overflow-x-auto border border-border/30">
                     {JSON.stringify(selectedItem.metadata, null, 2)}
                   </pre>
                 </div>

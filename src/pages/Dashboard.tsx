@@ -12,23 +12,23 @@ const Dashboard = () => {
   const { data: recentActivity, isLoading: activityLoading } = useRecentActivity();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/20">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-              AI Development Hub
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+              CodeXI
             </h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              Manage your AI projects, credentials, and analytics in one place
+            <p className="text-lg text-muted-foreground font-medium">
+              Build, Deploy & Scale AI-Powered Applications Effortlessly
             </p>
           </div>
           <ProfileDropdown />
         </div>
 
-        {/* Stats Cards Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Stats Cards Row - Made smaller and more compact */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <StatsCard
             title="Total Projects"
             value={statsLoading ? "..." : stats?.projects || 0}
@@ -52,7 +52,7 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* Charts Row */}
+        {/* Charts Row - Made larger and more prominent */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <DashboardChart
             title="API Calls"

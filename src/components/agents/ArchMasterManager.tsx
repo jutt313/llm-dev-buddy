@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -177,30 +176,29 @@ Your authority is absolute in task delegation, error resolution, LLM management,
     try {
       console.log('ArchMaster: Loading agent registry for user:', user.id);
       
-      // Use the edge function we created
+      // Use the edge function to load agent registry
       const { data, error } = await supabase.functions.invoke('get-agent-registry', {
         body: { user_id: user.id }
       });
 
       if (error) {
         console.error('ArchMaster: Edge function error:', error);
-        // Create default agent registry if edge function fails
-        setAgentRegistry(createDefaultAgentRegistry());
-        toast.error('Using default agent registry - database connection issue');
+        toast.error('Failed to load agent registry from database');
         return;
       }
 
-      console.log('ArchMaster: Agent registry loaded via edge function:', data?.length, 'agents');
-      if (data && Array.isArray(data)) {
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log('ArchMaster: Agent registry loaded successfully:', data.length, 'agents');
         setAgentRegistry(data);
+        toast.success(`Loaded ${data.length} agents from registry`);
       } else {
+        console.log('ArchMaster: No agents found in registry, initializing with default registry');
         setAgentRegistry(createDefaultAgentRegistry());
+        toast.info('Initialized with default agent registry');
       }
     } catch (error) {
       console.error('ArchMaster: Error loading agent registry:', error);
-      // Create default registry as fallback
-      setAgentRegistry(createDefaultAgentRegistry());
-      toast.error('Using default agent registry - database connection issue');
+      toast.error('Failed to connect to agent registry');
     }
   };
 

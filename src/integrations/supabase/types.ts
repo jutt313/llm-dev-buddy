@@ -67,6 +67,63 @@ export type Database = {
           },
         ]
       }
+      agent_registry: {
+        Row: {
+          agent_codename: string
+          agent_name: string
+          agent_number: number
+          basic_role: string
+          capabilities: string[] | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_built: boolean | null
+          performance_metrics: Json | null
+          specializations: string[] | null
+          system_prompt: string | null
+          team_name: string
+          team_number: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_codename: string
+          agent_name: string
+          agent_number: number
+          basic_role: string
+          capabilities?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_built?: boolean | null
+          performance_metrics?: Json | null
+          specializations?: string[] | null
+          system_prompt?: string | null
+          team_name: string
+          team_number: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_codename?: string
+          agent_name?: string
+          agent_number?: number
+          basic_role?: string
+          capabilities?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_built?: boolean | null
+          performance_metrics?: Json | null
+          specializations?: string[] | null
+          system_prompt?: string | null
+          team_name?: string
+          team_number?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string

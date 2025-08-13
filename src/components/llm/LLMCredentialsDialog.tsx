@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,8 @@ interface LLMCredential {
   provider_id: string;
   is_active: boolean;
   is_default: boolean;
-  test_status: string | null;
-  last_test_at: string | null;
+  test_status?: string | null;
+  last_test_at?: string | null;
   last_used_at: string | null;
   created_at: string;
   provider: {
@@ -66,8 +65,19 @@ export const LLMCredentialsDialog = ({ open, onOpenChange }: LLMCredentialsDialo
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setCredentials(data || []);
+      if (error) {
+        console.error('Error fetching credentials:', error);
+        return;
+      }
+      
+      // Transform the data to match our interface, ensuring optional fields are handled
+      const transformedData: LLMCredential[] = (data || []).map(item => ({
+        ...item,
+        test_status: item.test_status || null,
+        last_test_at: item.last_test_at || null,
+      }));
+      
+      setCredentials(transformedData);
     } catch (error) {
       console.error('Error fetching credentials:', error);
     } finally {

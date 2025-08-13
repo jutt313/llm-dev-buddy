@@ -9,11 +9,11 @@ interface CredentialCardProps {
     provider: {
       display_name: string;
     };
-    test_status: string | null;
+    test_status?: string | null;
     is_active: boolean;
     is_default: boolean;
     last_used_at: string | null;
-    last_test_at: string | null;
+    last_test_at?: string | null;
     created_at: string;
   };
   onClick: () => void;

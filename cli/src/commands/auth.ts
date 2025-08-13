@@ -1,4 +1,3 @@
-
 import { Command } from 'commander';
 import { config } from '../config';
 import { api } from '../services/api';
@@ -23,7 +22,7 @@ AuthCommand
           name: 'token',
           message: 'Enter your CodeXI personal token:',
           mask: '*',
-          validate: (input) => {
+          validate: (input: string) => {
             if (!input.startsWith('CXI_')) {
               return 'Token must start with CXI_';
             }

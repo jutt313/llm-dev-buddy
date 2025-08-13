@@ -22,7 +22,7 @@ export class APIService {
     });
 
     // Request interceptor
-    this.client.interceptors.request.use((config) => {
+    this.client.interceptors.request.use((config: any) => {
       const token = this.config.get('token');
       if (token) {
         config.data = { ...config.data, token };
@@ -32,8 +32,8 @@ export class APIService {
 
     // Response interceptor
     this.client.interceptors.response.use(
-      (response) => response,
-      (error) => {
+      (response: any) => response,
+      (error: any) => {
         if (error.response?.status === 401) {
           console.error(chalk.red('Authentication failed. Please check your token.'));
           process.exit(1);
@@ -52,6 +52,32 @@ export class APIService {
       const response = await this.client.post('/validate-personal-token', {
         token,
         requiredPermissions: ['cli:execute']
+      });
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      return { success: false, error: error.response?.data?.error || error.message };
+    }
+  }
+
+  async callAgent(agentId: number, task: string, sessionId?: string): Promise<APIResponse> {
+    try {
+      const token = config.get('token');
+      
+      // Map agent IDs to their respective endpoints
+      const agentEndpoints: { [key: number]: string } = {
+        11: '/cloud-ops-agent',
+        13: '/project-analyzer-agent'
+      };
+
+      const endpoint = agentEndpoints[agentId];
+      if (!endpoint) {
+        return { success: false, error: `Unknown agent ID: ${agentId}` };
+      }
+
+      const response = await this.client.post(endpoint, {
+        task,
+        token,
+        session_id: sessionId
       });
       return { success: true, data: response.data };
     } catch (error: any) {

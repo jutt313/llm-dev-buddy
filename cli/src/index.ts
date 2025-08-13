@@ -182,4 +182,4 @@ process.on('SIGWINCH', () => {
   // Terminal was resized - could trigger UI updates for monitoring
 });
 
-program.parse();
+program.parse(process.argv);

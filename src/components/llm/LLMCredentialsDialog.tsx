@@ -51,6 +51,7 @@ export const LLMCredentialsDialog = ({ open, onOpenChange }: LLMCredentialsDialo
           provider_id,
           is_active,
           is_default,
+          test_status,
           last_used_at,
           created_at,
           provider:llm_providers(
@@ -64,14 +65,7 @@ export const LLMCredentialsDialog = ({ open, onOpenChange }: LLMCredentialsDialo
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Map the data to include test_status as null for now (until migration is applied)
-      const mappedData = (data || []).map(item => ({
-        ...item,
-        test_status: null as string | null
-      }));
-      
-      setCredentials(mappedData);
+      setCredentials(data || []);
     } catch (error) {
       console.error('Error fetching credentials:', error);
     } finally {

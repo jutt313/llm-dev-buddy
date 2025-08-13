@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, TestTube, X } from "lucide-react";
+import { Loader2, TestTube, X, CheckCircle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -19,6 +19,12 @@ interface Model {
   id: string;
   name: string;
   display_name: string;
+}
+
+interface TestResult {
+  success: boolean;
+  error: string;
+  response: string;
 }
 
 interface AddCredentialFormProps {
@@ -38,6 +44,7 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
   });
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
 
   useEffect(() => {
     fetchProviders();
@@ -92,6 +99,8 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
     }
 
     setTesting(true);
+    setTestResult(null);
+    
     try {
       const provider = providers.find(p => p.id === formData.providerId);
       
@@ -105,6 +114,8 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
 
       if (error) throw error;
 
+      setTestResult(data);
+
       if (data.success) {
         toast.success('API key test successful!');
         return true;
@@ -115,6 +126,7 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
     } catch (error) {
       console.error('Error testing credential:', error);
       toast.error('Failed to test credential');
+      setTestResult({ success: false, error: 'Network error', response: '' });
       return false;
     } finally {
       setTesting(false);
@@ -122,7 +134,10 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
   };
 
   const saveCredential = async () => {
-    if (!user) return;
+    if (!user) {
+      toast.error('You must be logged in to save credentials');
+      return;
+    }
 
     // Test the credential first
     const testPassed = await testCredential();
@@ -142,13 +157,16 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
           is_active: true
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
       toast.success('Credential saved successfully!');
       onSuccess();
     } catch (error) {
       console.error('Error saving credential:', error);
-      toast.error('Failed to save credential');
+      toast.error(`Failed to save credential: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -240,6 +258,42 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
           />
         </div>
       </div>
+
+      {/* Test Result Display */}
+      {testResult && (
+        <div className={`p-4 rounded-xl border ${
+          testResult.success 
+            ? 'bg-green-500/10 border-green-500/30' 
+            : 'bg-red-500/10 border-red-500/30'
+        }`}>
+          <div className="flex items-center gap-2 mb-2">
+            {testResult.success ? (
+              <CheckCircle className="h-5 w-5 text-green-400" />
+            ) : (
+              <XCircle className="h-5 w-5 text-red-400" />
+            )}
+            <span className={`font-medium ${
+              testResult.success ? 'text-green-400' : 'text-red-400'
+            }`}>
+              {testResult.success ? 'Test Successful' : 'Test Failed'}
+            </span>
+          </div>
+          
+          {testResult.response && (
+            <div className="bg-white/5 p-3 rounded-lg">
+              <p className="text-sm text-slate-300 mb-1">API Response:</p>
+              <p className="text-white text-sm font-mono">{testResult.response}</p>
+            </div>
+          )}
+          
+          {testResult.error && (
+            <div className="bg-white/5 p-3 rounded-lg">
+              <p className="text-sm text-slate-300 mb-1">Error:</p>
+              <p className="text-red-400 text-sm">{testResult.error}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-3 pt-4">
         <Button

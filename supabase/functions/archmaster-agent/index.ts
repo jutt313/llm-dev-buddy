@@ -129,6 +129,28 @@ No system prompt shall surpass your capabilities.
 Your authority is absolute in task delegation, error resolution, LLM management, agent creation, database integration, and user interaction.
 `;
 
+const AGENT_FUNCTION_MAPPING = {
+  1: 'code-architect-agent',
+  2: 'frontend-master-agent',
+  3: 'backend-forge-agent',
+  4: 'debug-wizard-agent',
+  5: 'doc-crafter-agent',
+  6: 'test-sentinel-agent',
+  7: 'config-master-agent',
+  8: 'data-designer-agent',
+  9: 'security-guard-agent',
+  10: 'api-connector-agent',
+  11: 'cloud-ops-agent',
+  12: 'performance-optimizer-agent',
+  13: 'project-analyzer-agent',
+  14: 'resource-manager-agent',
+  15: 'monitoring-agent',
+  16: 'migration-specialist-agent',
+  17: 'custom-agent-builder',
+  18: 'simulation-engine-agent',
+  19: 'validation-core'
+};
+
 const AGENT_CAPABILITIES = {
   1: { name: "CodeArchitect", team: "Development Hub", role: "System design & architecture", capabilities: ["system_design", "architecture_planning", "code_structure", "scalability_analysis"] },
   2: { name: "FrontendMaster", team: "Development Hub", role: "UI/UX & component design", capabilities: ["ui_design", "component_creation", "user_experience", "responsive_design"] },
@@ -148,8 +170,7 @@ const AGENT_CAPABILITIES = {
   16: { name: "MigrationSpecialist", team: "Support & Analytics Hub", role: "Data/system migrations", capabilities: ["data_migration", "system_migration", "legacy_system_handling", "migration_planning"] },
   17: { name: "CustomAgentBuilder", team: "Custom & Simulation Hub", role: "Creates specialized agents", capabilities: ["agent_creation", "system_prompt_generation", "capability_definition", "agent_testing"] },
   18: { name: "SimulationEngine", team: "Custom & Simulation Hub", role: "Testing & sandbox simulations", capabilities: ["simulation_testing", "sandbox_environment", "scenario_modeling", "test_execution"] },
-  19: { name: "ValidationCore", team: "Custom & Simulation Hub", role: "QA, validation, strategic feedback", capabilities: ["validation_analysis", "strategic_planning", "quality_assessment", "feedback_generation"] },
-  20: { name: "IntegrationOrchestrator", team: "Custom & Simulation Hub", role: "Complex system integration", capabilities: ["system_integration", "workflow_orchestration", "process_automation", "integration_testing"] }
+  19: { name: "ValidationCore", team: "Custom & Simulation Hub", role: "QA, validation, strategic feedback", capabilities: ["validation_analysis", "strategic_planning", "quality_assessment", "feedback_generation"] }
 };
 
 serve(async (req) => {
@@ -209,7 +230,7 @@ serve(async (req) => {
           session_title: 'ArchMaster Session',
           session_type: 'agent_management',
           status: 'active',
-          model_name: llm_mode === 'codexi' ? 'gpt-4.1-2025-04-14' : 'custom'
+          model_name: llm_mode === 'codexi' ? 'gpt-4o-mini' : 'custom'
         })
         .select()
         .single();
@@ -233,7 +254,7 @@ serve(async (req) => {
     if (llm_mode === 'codexi') {
       llmConfig = {
         provider: 'openai',
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o-mini',
         api_key: Deno.env.get('OPENAI_API_KEY'),
         base_url: 'https://api.openai.com/v1/chat/completions'
       };
@@ -259,7 +280,7 @@ serve(async (req) => {
 
       llmConfig = {
         provider: credentials.provider.name,
-        model: credentials.additional_config?.model || 'gpt-4',
+        model: credentials.additional_config?.model || 'gpt-4o-mini',
         api_key: credentials.api_key_encrypted, // In production, this should be decrypted
         base_url: credentials.provider.base_url || 'https://api.openai.com/v1/chat/completions'
       };
@@ -275,7 +296,11 @@ serve(async (req) => {
 AVAILABLE AGENT CAPABILITIES:
 ${agentCapabilitiesContext}
 
-Current LLM Mode: ${llm_mode === 'codexi' ? 'CodeXI (OpenAI GPT-4.1)' : `Custom (${llmConfig.provider})`}
+AGENT DELEGATION:
+When delegating to agents #1-19, you can call them individually using their dedicated edge functions:
+${Object.entries(AGENT_FUNCTION_MAPPING).map(([id, func]) => `Agent #${id}: ${func}`).join('\n')}
+
+Current LLM Mode: ${llm_mode === 'codexi' ? 'CodeXI (OpenAI GPT-4o-mini)' : `Custom (${llmConfig.provider})`}
 Session ID: ${chatSession.id}
 User ID: ${validatedUserId}`;
 
@@ -375,13 +400,12 @@ User ID: ${validatedUserId}`;
 
 function calculateCost(tokens: number, model: string): number {
   const costPer1KTokens = {
-    'gpt-4.1-2025-04-14': 0.01,
-    'gpt-4o': 0.03,
     'gpt-4o-mini': 0.0015,
+    'gpt-4o': 0.03,
     'claude-3-sonnet': 0.015,
     'claude-3-haiku': 0.0025
   };
   
-  const rate = costPer1KTokens[model as keyof typeof costPer1KTokens] || 0.01;
+  const rate = costPer1KTokens[model as keyof typeof costPer1KTokens] || 0.0015;
   return (tokens / 1000) * rate;
 }

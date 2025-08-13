@@ -13,6 +13,7 @@ interface CredentialCardProps {
     is_active: boolean;
     is_default: boolean;
     last_used_at: string | null;
+    last_test_at: string | null;
     created_at: string;
   };
   onClick: () => void;
@@ -95,7 +96,12 @@ export const CredentialCard = ({ credential, onClick, isExpanded }: CredentialCa
 
           <div className="text-right">
             <p className="text-xs text-slate-400">
-              {credential.last_used_at ? `Last used ${formatDate(credential.last_used_at)}` : 'Never used'}
+              {credential.last_test_at 
+                ? `Last tested ${formatDate(credential.last_test_at)}` 
+                : credential.last_used_at 
+                  ? `Last used ${formatDate(credential.last_used_at)}` 
+                  : 'Never used'
+              }
             </p>
             <p className="text-xs text-slate-500">
               Added {formatDate(credential.created_at)}

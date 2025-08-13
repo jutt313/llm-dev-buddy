@@ -139,9 +139,10 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
       return;
     }
 
-    // Test the credential first
-    const testPassed = await testCredential();
-    if (!testPassed) return;
+    if (!formData.credentialName || !formData.providerId || !formData.apiKey) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -152,9 +153,10 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
           credential_name: formData.credentialName,
           provider_id: formData.providerId,
           api_key_encrypted: formData.apiKey, // In production, this should be encrypted
-          test_status: 'passed',
-          last_test_at: new Date().toISOString(),
-          is_active: true
+          test_status: testResult?.success ? 'passed' : 'pending',
+          last_test_at: testResult?.success ? new Date().toISOString() : null,
+          is_active: true,
+          is_default: false
         });
 
       if (error) {
@@ -164,7 +166,7 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
 
       toast.success('Credential saved successfully!');
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving credential:', error);
       toast.error(`Failed to save credential: ${error.message}`);
     } finally {
@@ -226,14 +228,14 @@ export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProp
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="model" className="text-white">Model</Label>
+          <Label htmlFor="model" className="text-white">Model (Optional)</Label>
           <Select
             value={formData.modelName}
             onValueChange={(value) => setFormData(prev => ({ ...prev, modelName: value }))}
             disabled={!formData.providerId}
           >
             <SelectTrigger className="bg-white/5 border-white/10 text-white">
-              <SelectValue placeholder="Select model" />
+              <SelectValue placeholder="Select model (optional)" />
             </SelectTrigger>
             <SelectContent className="bg-slate-800 border-white/10">
               {models.map((model) => (

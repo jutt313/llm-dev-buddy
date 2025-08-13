@@ -28,6 +28,9 @@ interface AgentRegistryEntry {
     tasks_completed: number;
     errors_count: number;
   };
+  created_at: string;
+  updated_at: string;
+  user_id: string;
 }
 
 interface TaskExecution {
@@ -167,24 +170,98 @@ You are ArchMaster, the ultimate orchestrator of CodeXI.
 No system prompt shall surpass your capabilities.
 Your authority is absolute in task delegation, error resolution, LLM management, agent creation, database integration, and user interaction.`;
 
-  // Load Agent Registry from Database
+  // Load Agent Registry from Database using raw query
   const loadAgentRegistry = async () => {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
-        .from('agent_registry')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('agent_number');
+      console.log('ArchMaster: Loading agent registry for user:', user.id);
+      
+      // Use raw query to access agent_registry table
+      const { data, error } = await supabase.rpc('get_agent_registry', {
+        p_user_id: user.id
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('ArchMaster: RPC error, falling back to direct query:', error);
+        
+        // Fallback: Use direct SQL query
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('agent_registry' as any)
+          .select('*')
+          .eq('user_id', user.id)
+          .order('agent_number');
+
+        if (fallbackError) {
+          console.error('ArchMaster: Fallback query error:', fallbackError);
+          // Create default agent registry if table doesn't exist yet
+          setAgentRegistry(createDefaultAgentRegistry());
+          return;
+        }
+        
+        console.log('ArchMaster: Fallback query successful, agents loaded:', fallbackData?.length);
+        setAgentRegistry(fallbackData || []);
+        return;
+      }
+
+      console.log('ArchMaster: Agent registry loaded via RPC:', data?.length, 'agents');
       setAgentRegistry(data || []);
-      console.log('ArchMaster: Agent registry loaded:', data?.length, 'agents');
     } catch (error) {
       console.error('ArchMaster: Error loading agent registry:', error);
-      toast.error('Failed to load agent registry');
+      // Create default registry as fallback
+      setAgentRegistry(createDefaultAgentRegistry());
+      toast.error('Using default agent registry - database connection issue');
     }
+  };
+
+  // Create default agent registry if database is not accessible
+  const createDefaultAgentRegistry = (): AgentRegistryEntry[] => {
+    const defaultAgents = [
+      { number: 1, name: 'CodeArchitect', codename: 'ARCH-001', team: 'Development Hub', teamNumber: 1, role: 'System design & architecture' },
+      { number: 2, name: 'FrontendMaster', codename: 'FRONT-002', team: 'Development Hub', teamNumber: 1, role: 'UI/UX & component design' },
+      { number: 3, name: 'BackendForge', codename: 'BACK-003', team: 'Development Hub', teamNumber: 1, role: 'APIs & integrations' },
+      { number: 4, name: 'DebugWizard', codename: 'DEBUG-004', team: 'Development Hub', teamNumber: 1, role: 'Debugging & optimization' },
+      { number: 5, name: 'DocCrafter', codename: 'DOC-005', team: 'Content & QA Hub', teamNumber: 2, role: 'Documentation' },
+      { number: 6, name: 'TestSentinel', codename: 'TEST-006', team: 'Content & QA Hub', teamNumber: 2, role: 'QA & automated tests' },
+      { number: 7, name: 'ConfigMaster', codename: 'CONFIG-007', team: 'Content & QA Hub', teamNumber: 2, role: 'Configurations & deployment scripts' },
+      { number: 8, name: 'DataDesigner', codename: 'DATA-008', team: 'Content & QA Hub', teamNumber: 2, role: 'Database modeling' },
+      { number: 9, name: 'SecurityGuard', codename: 'SEC-009', team: 'Security & Integration Hub', teamNumber: 3, role: 'Vulnerability scanning' },
+      { number: 10, name: 'APIConnector', codename: 'API-010', team: 'Security & Integration Hub', teamNumber: 3, role: 'Third-party APIs' },
+      { number: 11, name: 'CloudOps', codename: 'CLOUD-011', team: 'Security & Integration Hub', teamNumber: 3, role: 'Infrastructure & CI/CD' },
+      { number: 12, name: 'PerformanceOptimizer', codename: 'PERF-012', team: 'Security & Integration Hub', teamNumber: 3, role: 'Performance tuning' },
+      { number: 13, name: 'ProjectAnalyzer', codename: 'PROJ-013', team: 'Support & Analytics Hub', teamNumber: 4, role: 'Project analysis' },
+      { number: 14, name: 'ResourceManager', codename: 'RES-014', team: 'Support & Analytics Hub', teamNumber: 4, role: 'Assets & repository organization' },
+      { number: 15, name: 'MonitoringAgent', codename: 'MON-015', team: 'Support & Analytics Hub', teamNumber: 4, role: 'Logging & alerts' },
+      { number: 16, name: 'MigrationSpecialist', codename: 'MIG-016', team: 'Support & Analytics Hub', teamNumber: 4, role: 'Data/system migrations' },
+      { number: 17, name: 'CustomAgentBuilder', codename: 'CUSTOM-017', team: 'Custom & Simulation Hub', teamNumber: 5, role: 'Creates specialized agents' },
+      { number: 18, name: 'SimulationEngine', codename: 'SIM-018', team: 'Custom & Simulation Hub', teamNumber: 5, role: 'Testing & sandbox simulations' },
+      { number: 19, name: 'ValidationCore', codename: 'VALID-019', team: 'Custom & Simulation Hub', teamNumber: 5, role: 'QA, validation, strategic feedback' },
+      { number: 20, name: 'IntegrationOrchestrator', codename: 'INT-020', team: 'Custom & Simulation Hub', teamNumber: 5, role: 'Complex system integration' },
+    ];
+
+    return defaultAgents.map(agent => ({
+      id: `default-${agent.number}`,
+      agent_number: agent.number,
+      agent_name: agent.name,
+      agent_codename: agent.codename,
+      team_name: agent.team,
+      team_number: agent.teamNumber,
+      basic_role: agent.role,
+      capabilities: [],
+      specializations: [],
+      system_prompt: null,
+      is_built: false,
+      is_active: true,
+      performance_metrics: {
+        success_rate: 0,
+        avg_response_time: 0,
+        tasks_completed: 0,
+        errors_count: 0
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user_id: user?.id || ''
+    }));
   };
 
   // Create Chat Session

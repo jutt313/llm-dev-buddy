@@ -8,22 +8,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { TokenGenerationForm } from "./TokenGenerationForm";
 import { TokenDisplayModal } from "./TokenDisplayModal";
 import { useToast } from "@/components/ui/use-toast";
+import { Database } from "@/integrations/supabase/types";
 
-interface PersonalToken {
-  id: string;
-  token_name: string;
-  token_prefix: string;
+// Use the Supabase type and extend it
+type PersonalToken = Database['public']['Tables']['personal_tokens']['Row'] & {
   permissions: {
     llm: string[];
     agent: string[];
     project: string[];
     cli: string[];
   };
-  expires_at: string | null;
-  last_used_at: string | null;
-  created_at: string;
-  is_active: boolean;
-}
+};
 
 interface PersonalTokensDialogProps {
   open: boolean;
@@ -60,7 +55,18 @@ export const PersonalTokensDialog = ({ open, onOpenChange }: PersonalTokensDialo
         return;
       }
       
-      setTokens(data || []);
+      // Cast the permissions to the expected type
+      const typedTokens = (data || []).map(token => ({
+        ...token,
+        permissions: token.permissions as {
+          llm: string[];
+          agent: string[];
+          project: string[];
+          cli: string[];
+        }
+      }));
+      
+      setTokens(typedTokens);
     } catch (error) {
       console.error('Error fetching tokens:', error);
       toast({

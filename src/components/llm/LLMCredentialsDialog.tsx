@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -51,8 +52,6 @@ export const LLMCredentialsDialog = ({ open, onOpenChange }: LLMCredentialsDialo
           provider_id,
           is_active,
           is_default,
-          test_status,
-          last_test_at,
           last_used_at,
           created_at,
           provider:llm_providers(
@@ -70,11 +69,11 @@ export const LLMCredentialsDialog = ({ open, onOpenChange }: LLMCredentialsDialo
         return;
       }
       
-      // Transform the data to match our interface, ensuring optional fields are handled
+      // Transform the data to match our interface, handling missing columns gracefully
       const transformedData: LLMCredential[] = (data || []).map(item => ({
         ...item,
-        test_status: item.test_status || null,
-        last_test_at: item.last_test_at || null,
+        test_status: null, // Default to null until migration is applied
+        last_test_at: null, // Default to null until migration is applied
       }));
       
       setCredentials(transformedData);

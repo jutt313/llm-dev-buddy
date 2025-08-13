@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LLMCredentialsDialog } from "@/components/llm/LLMCredentialsDialog";
+import { PersonalTokensDialog } from "@/components/tokens/PersonalTokensDialog";
 
 const ProfileDropdown = () => {
   const { user, signOut } = useAuth();
@@ -30,12 +31,6 @@ const ProfileDropdown = () => {
   };
 
   const menuItems = [
-    {
-      id: "tokens",
-      label: "Personal Tokens",
-      icon: CreditCard,
-      description: "Generate and manage CLI access tokens"
-    },
     {
       id: "agents",
       label: "Agent Documentation",
@@ -90,13 +85,22 @@ const ProfileDropdown = () => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-white/10" />
           
-          {/* LLM Credentials - Special handling */}
+          {/* LLM Credentials */}
           <DropdownMenuItem
             onClick={() => setActiveDialog("credentials")}
             className="cursor-pointer m-1 rounded-xl hover:bg-white/10 focus:bg-white/10 text-white"
           >
             <Key className="mr-3 h-4 w-4 text-cyan-400" />
             <span className="font-medium">LLM Credentials</span>
+          </DropdownMenuItem>
+
+          {/* Personal Tokens */}
+          <DropdownMenuItem
+            onClick={() => setActiveDialog("tokens")}
+            className="cursor-pointer m-1 rounded-xl hover:bg-white/10 focus:bg-white/10 text-white"
+          >
+            <CreditCard className="mr-3 h-4 w-4 text-cyan-400" />
+            <span className="font-medium">Personal Tokens</span>
           </DropdownMenuItem>
           
           {menuItems.map((item) => (
@@ -121,9 +125,15 @@ const ProfileDropdown = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* LLM Credentials Dialog - Special component */}
+      {/* LLM Credentials Dialog */}
       <LLMCredentialsDialog 
         open={activeDialog === "credentials"} 
+        onOpenChange={(open) => !open && setActiveDialog(null)}
+      />
+
+      {/* Personal Tokens Dialog */}
+      <PersonalTokensDialog 
+        open={activeDialog === "tokens"} 
         onOpenChange={(open) => !open && setActiveDialog(null)}
       />
 

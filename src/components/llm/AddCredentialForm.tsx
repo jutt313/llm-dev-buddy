@@ -1,0 +1,273 @@
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, TestTube, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+
+interface Provider {
+  id: string;
+  name: string;
+  display_name: string;
+}
+
+interface Model {
+  id: string;
+  name: string;
+  display_name: string;
+}
+
+interface AddCredentialFormProps {
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+export const AddCredentialForm = ({ onSuccess, onCancel }: AddCredentialFormProps) => {
+  const { user } = useAuth();
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
+  const [formData, setFormData] = useState({
+    credentialName: '',
+    providerId: '',
+    modelName: '',
+    apiKey: ''
+  });
+  const [testing, setTesting] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchProviders();
+  }, []);
+
+  useEffect(() => {
+    if (formData.providerId) {
+      fetchModels(formData.providerId);
+    } else {
+      setModels([]);
+      setFormData(prev => ({ ...prev, modelName: '' }));
+    }
+  }, [formData.providerId]);
+
+  const fetchProviders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('llm_providers')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_name');
+
+      if (error) throw error;
+      setProviders(data || []);
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      toast.error('Failed to load providers');
+    }
+  };
+
+  const fetchModels = async (providerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('llm_models')
+        .select('*')
+        .eq('provider_id', providerId)
+        .eq('is_active', true)
+        .order('display_name');
+
+      if (error) throw error;
+      setModels(data || []);
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      toast.error('Failed to load models');
+    }
+  };
+
+  const testCredential = async () => {
+    if (!formData.apiKey || !formData.providerId) {
+      toast.error('Please fill in all required fields');
+      return false;
+    }
+
+    setTesting(true);
+    try {
+      const provider = providers.find(p => p.id === formData.providerId);
+      
+      const { data, error } = await supabase.functions.invoke('test-llm-credential', {
+        body: {
+          provider: provider?.name,
+          apiKey: formData.apiKey,
+          model: formData.modelName
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success('API key test successful!');
+        return true;
+      } else {
+        toast.error(`Test failed: ${data.error}`);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error testing credential:', error);
+      toast.error('Failed to test credential');
+      return false;
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const saveCredential = async () => {
+    if (!user) return;
+
+    // Test the credential first
+    const testPassed = await testCredential();
+    if (!testPassed) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('user_llm_credentials')
+        .insert({
+          user_id: user.id,
+          credential_name: formData.credentialName,
+          provider_id: formData.providerId,
+          api_key_encrypted: formData.apiKey, // In production, this should be encrypted
+          test_status: 'passed',
+          last_test_at: new Date().toISOString(),
+          is_active: true
+        });
+
+      if (error) throw error;
+
+      toast.success('Credential saved successfully!');
+      onSuccess();
+    } catch (error) {
+      console.error('Error saving credential:', error);
+      toast.error('Failed to save credential');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveCredential();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-white">Add New Credential</h3>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onCancel}
+          className="text-slate-400 hover:text-white"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="credentialName" className="text-white">Credential Name</Label>
+          <Input
+            id="credentialName"
+            placeholder="e.g., My OpenAI Key"
+            value={formData.credentialName}
+            onChange={(e) => setFormData(prev => ({ ...prev, credentialName: e.target.value }))}
+            className="bg-white/5 border-white/10 text-white placeholder:text-slate-400"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="provider" className="text-white">Provider</Label>
+          <Select
+            value={formData.providerId}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, providerId: value }))}
+            required
+          >
+            <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectValue placeholder="Select provider" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-white/10">
+              {providers.map((provider) => (
+                <SelectItem key={provider.id} value={provider.id} className="text-white">
+                  {provider.display_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="model" className="text-white">Model</Label>
+          <Select
+            value={formData.modelName}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, modelName: value }))}
+            disabled={!formData.providerId}
+          >
+            <SelectTrigger className="bg-white/5 border-white/10 text-white">
+              <SelectValue placeholder="Select model" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-white/10">
+              {models.map((model) => (
+                <SelectItem key={model.id} value={model.name} className="text-white">
+                  {model.display_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="apiKey" className="text-white">API Key</Label>
+          <Input
+            id="apiKey"
+            type="password"
+            placeholder="Enter your API key"
+            value={formData.apiKey}
+            onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
+            className="bg-white/5 border-white/10 text-white placeholder:text-slate-400"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-3 pt-4">
+        <Button
+          type="button"
+          onClick={testCredential}
+          disabled={testing || !formData.apiKey || !formData.providerId}
+          className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/30"
+        >
+          {testing ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <TestTube className="h-4 w-4 mr-2" />
+          )}
+          Test Connection
+        </Button>
+
+        <Button
+          type="submit"
+          disabled={saving || !formData.credentialName || !formData.providerId || !formData.apiKey}
+          className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white border-0"
+        >
+          {saving ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            'Save Credential'
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+};

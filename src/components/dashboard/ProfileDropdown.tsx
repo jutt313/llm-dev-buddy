@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   User, 
@@ -20,6 +19,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LLMCredentialsDialog } from "@/components/llm/LLMCredentialsDialog";
 
 const ProfileDropdown = () => {
   const { user, signOut } = useAuth();
@@ -30,12 +30,6 @@ const ProfileDropdown = () => {
   };
 
   const menuItems = [
-    {
-      id: "credentials",
-      label: "LLM Credentials",
-      icon: Key,
-      description: "Manage your API keys and credentials"
-    },
     {
       id: "tokens",
       label: "Personal Tokens",
@@ -96,6 +90,15 @@ const ProfileDropdown = () => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-white/10" />
           
+          {/* LLM Credentials - Special handling */}
+          <DropdownMenuItem
+            onClick={() => setActiveDialog("credentials")}
+            className="cursor-pointer m-1 rounded-xl hover:bg-white/10 focus:bg-white/10 text-white"
+          >
+            <Key className="mr-3 h-4 w-4 text-cyan-400" />
+            <span className="font-medium">LLM Credentials</span>
+          </DropdownMenuItem>
+          
           {menuItems.map((item) => (
             <DropdownMenuItem
               key={item.id}
@@ -118,7 +121,13 @@ const ProfileDropdown = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Dialog for each menu item */}
+      {/* LLM Credentials Dialog - Special component */}
+      <LLMCredentialsDialog 
+        open={activeDialog === "credentials"} 
+        onOpenChange={(open) => !open && setActiveDialog(null)}
+      />
+
+      {/* Other dialogs */}
       {menuItems.map((item) => (
         <Dialog 
           key={item.id} 

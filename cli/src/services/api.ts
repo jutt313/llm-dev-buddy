@@ -59,12 +59,13 @@ export class APIService {
     }
   }
 
-  async callAgent(agentId: number, task: string, sessionId?: string): Promise<APIResponse> {
+  async callAgent(agentId: number, task: string, sessionId?: string, context?: any): Promise<APIResponse> {
     try {
       const token = config.get('token');
       
       // Map agent IDs to their respective endpoints
       const agentEndpoints: { [key: number]: string } = {
+        9: '/build-optimizer-agent',
         11: '/cloud-ops-agent',
         13: '/project-analyzer-agent'
       };
@@ -74,11 +75,18 @@ export class APIService {
         return { success: false, error: `Unknown agent ID: ${agentId}` };
       }
 
-      const response = await this.client.post(endpoint, {
+      const payload: any = {
         task,
         token,
         session_id: sessionId
-      });
+      };
+
+      // Add context for BuildOptimizer
+      if (agentId === 9 && context) {
+        payload.context = context;
+      }
+
+      const response = await this.client.post(endpoint, payload);
       return { success: true, data: response.data };
     } catch (error: any) {
       return { success: false, error: error.response?.data?.error || error.message };

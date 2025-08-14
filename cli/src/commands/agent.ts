@@ -18,7 +18,7 @@ const AGENTS = {
   6: { name: 'TestSentinel', team: 'Content & QA Hub', role: 'QA & automated tests' },
   7: { name: 'ConfigMaster', team: 'Content & QA Hub', role: 'Configurations & deployment scripts' },
   8: { name: 'DataDesigner', team: 'Content & QA Hub', role: 'Database modeling' },
-  9: { name: 'SecurityGuard', team: 'Security & Integration Hub', role: 'Vulnerability scanning' },
+  9: { name: 'BuildOptimizer', team: 'Security & Integration Hub', role: 'Build pipeline optimization & performance' },
   10: { name: 'APIConnector', team: 'Security & Integration Hub', role: 'Third-party APIs' },
   11: { name: 'CloudOps', team: 'Security & Integration Hub', role: 'Infrastructure & CI/CD' },
   12: { name: 'PerformanceOptimizer', team: 'Security & Integration Hub', role: 'Performance tuning' },
@@ -56,4 +56,62 @@ AgentCommand
 
     console.log('\n' + table(data));
     console.log(chalk.yellow('\nNote: All agents are managed by ArchMaster. Use "codexi chat" to interact.'));
+  });
+
+// Add BuildOptimizer-specific command for build analysis
+AgentCommand
+  .command('build-analysis')
+  .description('Get build optimization analysis from BuildOptimizer (Agent #9)')
+  .option('-f, --frameworks <frameworks>', 'Target frameworks (comma-separated)', 'react,vite,typescript')
+  .option('-t, --targets <targets>', 'Build targets (comma-separated)', 'frontend,backend')
+  .option('-g, --goals <goals>', 'Performance goals as JSON string', '{"build_time_reduction":"50%","bundle_size_reduction":"30%"}')
+  .action(async (options) => {
+    if (!config.isAuthenticated()) {
+      console.log(chalk.red('Please login first: codexi auth login'));
+      return;
+    }
+
+    const spinner = ora('Analyzing build pipeline with BuildOptimizer...').start();
+
+    try {
+      const frameworks = options.frameworks.split(',').map((f: string) => f.trim());
+      const targets = options.targets.split(',').map((t: string) => t.trim());
+      let goals;
+      
+      try {
+        goals = JSON.parse(options.goals);
+      } catch {
+        goals = { build_time_reduction: '50%', bundle_size_reduction: '30%' };
+      }
+
+      const context = {
+        optimization_focus: 'comprehensive',
+        build_targets: targets,
+        performance_goals: goals,
+        frameworks: frameworks,
+        ci_cd_platform: 'github_actions'
+      };
+
+      const result = await api.callAgent(9, 'Analyze current build pipeline and provide comprehensive optimization recommendations with performance metrics and implementation steps', undefined, context);
+
+      if (result.success) {
+        spinner.succeed(chalk.green('Build analysis completed by BuildOptimizer:'));
+        console.log('\n' + chalk.white(result.data.response));
+        
+        if (result.data.performance_metrics) {
+          console.log(chalk.cyan('\n📊 Performance Metrics:'));
+          Object.entries(result.data.performance_metrics).forEach(([key, value]) => {
+            console.log(`  ${chalk.yellow(key)}: ${chalk.green(value)}`);
+          });
+        }
+
+        if (result.data.tokens_used) {
+          console.log(chalk.gray(`\nTokens used: ${result.data.tokens_used}`));
+        }
+      } else {
+        spinner.fail(chalk.red(`Error: ${result.error}`));
+      }
+    } catch (error: any) {
+      spinner.fail(chalk.red(`Error: ${error.message}`));
+    }
   });

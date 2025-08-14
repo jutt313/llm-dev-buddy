@@ -23,7 +23,7 @@ const AGENT_DETAILS = {
   6: { name: "TestSentinel", role: "QA & automated tests" },
   7: { name: "ConfigMaster", role: "Configurations & deployment scripts" },
   8: { name: "DataDesigner", role: "Database modeling" },
-  9: { name: "SecurityGuard", role: "Vulnerability scanning" },
+  9: { name: "BuildOptimizer", role: "Build pipeline optimization & performance" },
   10: { name: "APIConnector", role: "Third-party APIs" },
   11: { name: "CloudOps", role: "Infrastructure & CI/CD" },
   12: { name: "PerformanceOptimizer", role: "Performance tuning" },
@@ -203,6 +203,37 @@ const AgentSystemStatus = () => {
           </Card>
         ))}
       </div>
+
+      {/* BuildOptimizer Highlight */}
+      <Card className="bg-gradient-to-r from-orange-500/10 via-red-600/10 to-pink-600/10 border border-orange-500/20">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-3">
+            <div className="p-2 bg-orange-500/20 rounded-xl border border-orange-500/30">
+              <Bot className="h-6 w-6 text-orange-400" />
+            </div>
+            BuildOptimizer (Agent #9) - Build Pipeline Master
+          </CardTitle>
+          <CardDescription className="text-slate-300">
+            Advanced build optimization, intelligent caching, and performance acceleration
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <span className="text-white font-medium">Pipeline Optimization Ready</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <span className="text-white font-medium">Advanced Caching Enabled</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <span className="text-white font-medium">Multi-Framework Support</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ArchMaster Status */}
       <Card className="bg-gradient-to-r from-cyan-500/10 via-blue-600/10 to-purple-600/10 border border-cyan-500/20">

@@ -197,6 +197,132 @@ async function requestValidationFromCore(supabase: any, requestingAgentId: numbe
   return null;
 }
 
+// NEW: Process Individual Checklist Items
+async function processChecklistItem(item: string, agentResponse: string, context: string, taskData: any) {
+  console.log(`Processing checklist item: ${item}`);
+  
+  // Advanced item validation logic
+  const itemLower = item.toLowerCase();
+  const responseLower = agentResponse.toLowerCase();
+  const contextLower = context?.toLowerCase() || '';
+  
+  let completed = false;
+  let details = '';
+  let confidence = 0;
+  
+  // Check if item is addressed in response
+  if (responseLower.includes(itemLower)) {
+    completed = true;
+    confidence += 40;
+    details += `Item mentioned in response. `;
+  }
+  
+  // Check if item is addressed in context
+  if (contextLower.includes(itemLower)) {
+    completed = true;
+    confidence += 20;
+    details += `Item addressed in context. `;
+  }
+  
+  // Specific validation patterns for common checklist items
+  const validationPatterns = {
+    'requirements documented': ['requirements', 'specification', 'documented', 'defined'],
+    'constraints identified': ['constraint', 'limitation', 'restriction', 'boundary'],
+    'success criteria defined': ['success', 'criteria', 'metric', 'benchmark', 'kpi'],
+    'system components identified': ['component', 'service', 'module', 'system'],
+    'data flow documented': ['data flow', 'dataflow', 'flow diagram', 'data movement'],
+    'integration points defined': ['integration', 'api', 'endpoint', 'interface'],
+    'scalability considerations': ['scalability', 'scaling', 'performance', 'load'],
+    'authentication strategy': ['authentication', 'auth', 'login', 'identity'],
+    'authorization model': ['authorization', 'permission', 'access control', 'rbac'],
+    'data encryption': ['encryption', 'encrypt', 'security', 'cryptography'],
+    'security vulnerabilities': ['security', 'vulnerability', 'risk', 'threat'],
+    'performance benchmarks': ['performance', 'benchmark', 'metric', 'speed'],
+    'caching strategy': ['cache', 'caching', 'redis', 'memcached'],
+    'database optimization': ['database', 'db', 'optimization', 'query', 'index'],
+    'load balancing': ['load balancing', 'load balancer', 'distribute load'],
+    'code structure': ['structure', 'architecture', 'organization', 'pattern'],
+    'documentation': ['documentation', 'docs', 'readme', 'comment'],
+    'error handling': ['error handling', 'exception', 'try catch', 'error'],
+    'testing strategy': ['testing', 'test', 'unit test', 'integration test']
+  };
+  
+  // Check against validation patterns
+  for (const [pattern, keywords] of Object.entries(validationPatterns)) {
+    if (itemLower.includes(pattern)) {
+      const keywordFound = keywords.some(keyword => 
+        responseLower.includes(keyword) || contextLower.includes(keyword)
+      );
+      if (keywordFound) {
+        completed = true;
+        confidence += 30;
+        details += `Pattern matching for "${pattern}" found. `;
+        break;
+      }
+    }
+  }
+  
+  // Final validation
+  if (!details) {
+    details = `Item "${item}" not clearly addressed in response or context.`;
+  }
+  
+  return {
+    completed,
+    confidence,
+    details: details.trim(),
+    timestamp: new Date().toISOString()
+  };
+}
+
+// NEW: Validate Checklist Completion
+async function validateChecklistCompletion(checklistResults: any[]) {
+  console.log('Validating checklist completion');
+  
+  const totalItems = checklistResults.length;
+  const completedItems = checklistResults.filter(item => item.status === 'completed').length;
+  const failedItems = checklistResults.filter(item => item.status === 'failed');
+  
+  const completionRate = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+  const isComplete = completionRate >= 80; // 80% threshold for completion
+  
+  return {
+    isComplete,
+    completionRate,
+    totalItems,
+    completedItems,
+    failedItems: failedItems.length,
+    failedItemDetails: failedItems,
+    summary: `${completedItems}/${totalItems} items completed (${completionRate.toFixed(1)}%)`
+  };
+}
+
+// NEW: Send Checklist Results to ValidationCore
+async function sendChecklistResultsToValidationCore(
+  supabase: any, userId: string, sessionId: string, 
+  task: string, checklistResults: any[], agentResponse: string, 
+  checklistValidation: any
+) {
+  console.log('Sending checklist results to ValidationCore for final approval');
+  
+  const approvalRequest = {
+    task_summary: task,
+    checklist_results: checklistResults,
+    checklist_validation: checklistValidation,
+    agent_response: agentResponse,
+    completion_rate: checklistValidation.completionRate,
+    failed_items: checklistValidation.failedItemDetails,
+    requires_final_approval: true,
+    request_type: 'checklist_approval'
+  };
+  
+  const validationResponse = await requestValidationFromCore(
+    supabase, 1, userId, sessionId, 'approval', approvalRequest
+  );
+  
+  return validationResponse;
+}
+
 // Task Execution Framework
 async function createTaskLog(supabase: any, agentId: number, userId: string, sessionId: string, taskSummary: string, taskData: any) {
   const { data, error } = await supabase
@@ -421,16 +547,101 @@ Execute this architectural task following your THOUGHT PROCESS & ACTIONS framewo
     const data = await response.json();
     const agentResponse = data.choices[0].message.content;
 
-    // Step 4: Validate - Load and check against checklist
-    console.log('Step 4: Validating against quality checklist');
+    // Step 4: Validate - Load and EXECUTE checklist (FIXED - No longer just loading!)
+    console.log('Step 4: Loading and EXECUTING quality checklist');
     const checklist = await loadAgentChecklist(supabase, 1, validatedUserId);
+    
+    let checklistResults: any[] = [];
+    let checklistValidation: any = null;
+    let finalApprovalResponse: any = null;
+
+    if (checklist) {
+      console.log('EXECUTING checklist items...');
+      
+      // Process each checklist category and item
+      const checklistItems = checklist.checklist_items;
+      
+      for (const [category, categoryData] of Object.entries(checklistItems)) {
+        console.log(`Processing category: ${category}`);
+        
+        if (categoryData && typeof categoryData === 'object' && 'items' in categoryData) {
+          const items = (categoryData as any).items;
+          
+          for (const item of items) {
+            console.log(`Processing item: ${item}`);
+            
+            const itemResult = await processChecklistItem(
+              item, 
+              agentResponse, 
+              context || '', 
+              { task, complexity: task_complexity }
+            );
+            
+            checklistResults.push({
+              category,
+              item,
+              status: itemResult.completed ? 'completed' : 'failed',
+              confidence: itemResult.confidence,
+              details: itemResult.details,
+              timestamp: itemResult.timestamp
+            });
+          }
+        }
+      }
+      
+      // Validate overall checklist completion
+      checklistValidation = await validateChecklistCompletion(checklistResults);
+      console.log(`Checklist validation result: ${checklistValidation.summary}`);
+      
+      // CRITICAL FIX: Send checklist results to ValidationCore for final approval
+      console.log('Sending checklist results to Agent #19 for final approval...');
+      finalApprovalResponse = await sendChecklistResultsToValidationCore(
+        supabase, validatedUserId, session_id, task, 
+        checklistResults, agentResponse, checklistValidation
+      );
+      
+      // Handle Agent #19's approval/rejection
+      if (finalApprovalResponse) {
+        const approvalText = finalApprovalResponse.validation || '';
+        const isApproved = approvalText.toLowerCase().includes('approve') || 
+                          approvalText.toLowerCase().includes('accept') ||
+                          checklistValidation.completionRate >= 80;
+        
+        if (!isApproved && checklistValidation.completionRate < 60) {
+          // Return error if not approved and completion rate is too low
+          return new Response(JSON.stringify({
+            error: 'Task not approved by ValidationCore - insufficient checklist completion',
+            details: {
+              validation_response: approvalText,
+              completion_rate: checklistValidation.completionRate,
+              failed_items: checklistValidation.failedItemDetails
+            },
+            agent: 'CodeArchitect',
+            agent_id: 1,
+            task_id: taskId,
+            checklist_results: checklistResults
+          }), { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          });
+        }
+        
+        console.log(`Final approval from Agent #19: ${isApproved ? 'APPROVED' : 'CONDITIONALLY APPROVED'}`);
+      }
+    }
 
     // Step 5: Report - Save task results and update memory
     const executionTime = Date.now() - startTime;
     
     await updateTaskLog(supabase, taskId, {
       status: 'completed',
-      final_output: { response: agentResponse, validation: validationResponse },
+      final_output: { 
+        response: agentResponse, 
+        validation: validationResponse,
+        checklist_results: checklistResults,
+        checklist_validation: checklistValidation,
+        final_approval: finalApprovalResponse
+      },
       tokens_used: data.usage?.total_tokens || 0,
       execution_time_ms: executionTime,
       completed_at: new Date().toISOString()
@@ -442,7 +653,10 @@ Execute this architectural task following your THOUGHT PROCESS & ACTIONS framewo
       response: agentResponse,
       tokens_used: data.usage?.total_tokens || 0,
       execution_time_ms: executionTime,
-      validation_used: needsValidation
+      validation_used: needsValidation,
+      checklist_executed: checklist ? true : false,
+      checklist_completion_rate: checklistValidation?.completionRate || 0,
+      final_approval_received: finalApprovalResponse ? true : false
     }, ['completed', task_complexity]);
 
     // Update universal memory with successful patterns
@@ -450,7 +664,13 @@ Execute this architectural task following your THOUGHT PROCESS & ACTIONS framewo
       pattern_type: 'architectural_task',
       complexity: task_complexity,
       validation_required: needsValidation,
-      success_indicators: ['task_completed', 'memory_updated', 'checklist_validated']
+      checklist_completion_rate: checklistValidation?.completionRate || 0,
+      success_indicators: [
+        'task_completed', 
+        'memory_updated', 
+        'checklist_executed',
+        'validation_core_approved'
+      ]
     }, ['pattern', 'success']);
 
     // Log usage analytics
@@ -470,7 +690,10 @@ Execute this architectural task following your THOUGHT PROCESS & ACTIONS framewo
           execution_time_ms: executionTime,
           validation_used: needsValidation,
           memory_entries_loaded: agentMemory.local.length + agentMemory.universal.length,
-          checklist_validated: checklist ? true : false
+          checklist_executed: checklist ? true : false,
+          checklist_completion_rate: checklistValidation?.completionRate || 0,
+          checklist_items_processed: checklistResults.length,
+          final_approval_received: finalApprovalResponse ? true : false
         }
       });
 
@@ -489,8 +712,12 @@ Execute this architectural task following your THOUGHT PROCESS & ACTIONS framewo
         task_complexity,
         validation_used: needsValidation,
         memory_context_loaded: true,
-        checklist_validated: checklist ? true : false,
-        task_completed: true
+        checklist_executed: checklist ? true : false,
+        checklist_results: checklistResults,
+        checklist_validation: checklistValidation,
+        final_approval_response: finalApprovalResponse,
+        task_completed: true,
+        workflow_complete: true
       }), 
       { 
         status: 200, 

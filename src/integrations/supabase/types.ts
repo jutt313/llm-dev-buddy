@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_checklists: {
+        Row: {
+          agent_id: number
+          checklist_items: Json
+          checklist_name: string
+          created_at: string | null
+          created_by: string
+          id: string
+          is_default: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: number
+          checklist_items: Json
+          checklist_name: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_default?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: number
+          checklist_items?: Json
+          checklist_name?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_default?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       agent_configurations: {
         Row: {
           created_at: string
@@ -66,6 +99,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      agent_memory: {
+        Row: {
+          agent_id: number
+          context_tags: string[] | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          memory_key: string
+          memory_type: string
+          memory_value: Json
+          session_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: number
+          context_tags?: string[] | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          memory_key: string
+          memory_type: string
+          memory_value: Json
+          session_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: number
+          context_tags?: string[] | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          memory_key?: string
+          memory_type?: string
+          memory_value?: Json
+          session_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       agent_registry: {
         Row: {
@@ -121,6 +196,102 @@ export type Database = {
           team_number?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      agent_task_logs: {
+        Row: {
+          agent_id: number
+          completed_at: string | null
+          created_at: string | null
+          error_logs: Json | null
+          execution_steps: Json | null
+          execution_time_ms: number | null
+          final_output: Json | null
+          id: string
+          session_id: string | null
+          status: string | null
+          task_data: Json
+          task_summary: string
+          tokens_used: number | null
+          user_id: string
+          validation_requests: string[] | null
+        }
+        Insert: {
+          agent_id: number
+          completed_at?: string | null
+          created_at?: string | null
+          error_logs?: Json | null
+          execution_steps?: Json | null
+          execution_time_ms?: number | null
+          final_output?: Json | null
+          id?: string
+          session_id?: string | null
+          status?: string | null
+          task_data: Json
+          task_summary: string
+          tokens_used?: number | null
+          user_id: string
+          validation_requests?: string[] | null
+        }
+        Update: {
+          agent_id?: number
+          completed_at?: string | null
+          created_at?: string | null
+          error_logs?: Json | null
+          execution_steps?: Json | null
+          execution_time_ms?: number | null
+          final_output?: Json | null
+          id?: string
+          session_id?: string | null
+          status?: string | null
+          task_data?: Json
+          task_summary?: string
+          tokens_used?: number | null
+          user_id?: string
+          validation_requests?: string[] | null
+        }
+        Relationships: []
+      }
+      agent_validations: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          request_data: Json
+          request_type: string
+          requesting_agent_id: number
+          response_data: Json | null
+          session_id: string | null
+          status: string | null
+          user_id: string
+          validation_agent_id: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          request_data: Json
+          request_type: string
+          requesting_agent_id: number
+          response_data?: Json | null
+          session_id?: string | null
+          status?: string | null
+          user_id: string
+          validation_agent_id?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          request_data?: Json
+          request_type?: string
+          requesting_agent_id?: number
+          response_data?: Json | null
+          session_id?: string | null
+          status?: string | null
+          user_id?: string
+          validation_agent_id?: number | null
         }
         Relationships: []
       }

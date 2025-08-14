@@ -66,6 +66,7 @@ export class APIService {
       // Map agent IDs to their respective endpoints
       const agentEndpoints: { [key: number]: string } = {
         9: '/build-optimizer-agent',
+        10: '/accessibility-champion-agent',
         11: '/cloud-ops-agent',
         13: '/project-analyzer-agent'
       };
@@ -81,8 +82,8 @@ export class APIService {
         session_id: sessionId
       };
 
-      // Add context for BuildOptimizer
-      if (agentId === 9 && context) {
+      // Add context for specific agents that support it
+      if ((agentId === 9 || agentId === 10) && context) {
         payload.context = context;
       }
 

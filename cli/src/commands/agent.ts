@@ -2,116 +2,198 @@
 import { Command } from 'commander';
 import { config } from '../config';
 import { api } from '../services/api';
+import { terminal } from '../utils/terminal';
 import chalk from 'chalk';
-import ora from 'ora';
-import { table } from 'table';
 
-export const AgentCommand = new Command('agent')
-  .description('Agent management commands');
+export const agentCommand = new Command()
+  .name('agent')
+  .description('Interact with CodeXI AI agents')
+  .option('-s, --session <id>', 'Session ID for conversation continuity');
 
-const AGENTS = {
-  1: { name: 'CodeArchitect', team: 'Development Hub', role: 'System design & architecture' },
-  2: { name: 'FrontendMaster', team: 'Development Hub', role: 'UI/UX & component design' },
-  3: { name: 'BackendForge', team: 'Development Hub', role: 'APIs & integrations' },
-  4: { name: 'DebugWizard', team: 'Development Hub', role: 'Debugging & optimization' },
-  5: { name: 'DocCrafter', team: 'Content & QA Hub', role: 'Documentation' },
-  6: { name: 'TestSentinel', team: 'Content & QA Hub', role: 'QA & automated tests' },
-  7: { name: 'ConfigMaster', team: 'Content & QA Hub', role: 'Configurations & deployment scripts' },
-  8: { name: 'DataDesigner', team: 'Content & QA Hub', role: 'Database modeling' },
-  9: { name: 'BuildOptimizer', team: 'Security & Integration Hub', role: 'Build pipeline optimization & performance' },
-  10: { name: 'APIConnector', team: 'Security & Integration Hub', role: 'Third-party APIs' },
-  11: { name: 'CloudOps', team: 'Security & Integration Hub', role: 'Infrastructure & CI/CD' },
-  12: { name: 'PerformanceOptimizer', team: 'Security & Integration Hub', role: 'Performance tuning' },
-  13: { name: 'ProjectAnalyzer', team: 'Support & Analytics Hub', role: 'Project analysis' },
-  14: { name: 'ResourceManager', team: 'Support & Analytics Hub', role: 'Assets & repository organization' },
-  15: { name: 'MonitoringAgent', team: 'Support & Analytics Hub', role: 'Logging & alerts' },
-  16: { name: 'MigrationSpecialist', team: 'Support & Analytics Hub', role: 'Data/system migrations' },
-  17: { name: 'CustomAgentBuilder', team: 'Custom & Simulation Hub', role: 'Creates specialized agents' },
-  18: { name: 'SimulationEngine', team: 'Custom & Simulation Hub', role: 'Testing & sandbox simulations' },
-  19: { name: 'ValidationCore', team: 'Custom & Simulation Hub', role: 'QA, validation, strategic feedback' },
-  20: { name: 'ArchMaster', team: 'Management', role: 'Supreme Manager Agent' }
-};
-
-AgentCommand
-  .command('list')
-  .description('List all available agents (managed by ArchMaster)')
-  .action(() => {
-    if (!config.isAuthenticated()) {
-      console.log(chalk.red('Please login first: codexi auth login'));
-      return;
-    }
-
-    const data = [
-      ['ID', 'Name', 'Team', 'Role']
-    ];
-
-    Object.entries(AGENTS).forEach(([id, agent]) => {
-      data.push([
-        chalk.cyan(`#${id}`),
-        chalk.bold(agent.name),
-        chalk.gray(agent.team),
-        agent.role
-      ]);
-    });
-
-    console.log('\n' + table(data));
-    console.log(chalk.yellow('\nNote: All agents are managed by ArchMaster. Use "codexi chat" to interact.'));
-  });
-
-// Add BuildOptimizer-specific command for build analysis
-AgentCommand
-  .command('build-analysis')
-  .description('Get build optimization analysis from BuildOptimizer (Agent #9)')
-  .option('-f, --frameworks <frameworks>', 'Target frameworks (comma-separated)', 'react,vite,typescript')
-  .option('-t, --targets <targets>', 'Build targets (comma-separated)', 'frontend,backend')
-  .option('-g, --goals <goals>', 'Performance goals as JSON string', '{"build_time_reduction":"50%","bundle_size_reduction":"30%"}')
-  .action(async (options) => {
-    if (!config.isAuthenticated()) {
-      console.log(chalk.red('Please login first: codexi auth login'));
-      return;
-    }
-
-    const spinner = ora('Analyzing build pipeline with BuildOptimizer...').start();
-
+// ArchMaster agent command
+agentCommand
+  .command('archmaster')
+  .description('Chat with ArchMaster, the enterprise architecture and system design agent')
+  .argument('<message>', 'Message to send to ArchMaster')
+  .option('-s, --session <id>', 'Session ID for conversation continuity')
+  .action(async (message: string, options: any) => {
+    const sessionId = options.session || agentCommand.opts().session;
+    
+    terminal.showSpinner('ArchMaster is analyzing your architecture requirements...');
+    
     try {
-      const frameworks = options.frameworks.split(',').map((f: string) => f.trim());
-      const targets = options.targets.split(',').map((t: string) => t.trim());
-      let goals;
+      const response = await api.callArchMaster(message, sessionId);
       
-      try {
-        goals = JSON.parse(options.goals);
-      } catch {
-        goals = { build_time_reduction: '50%', bundle_size_reduction: '30%' };
-      }
-
-      const context = {
-        optimization_focus: 'comprehensive',
-        build_targets: targets,
-        performance_goals: goals,
-        frameworks: frameworks,
-        ci_cd_platform: 'github_actions'
-      };
-
-      const result = await api.callAgent(9, 'Analyze current build pipeline and provide comprehensive optimization recommendations with performance metrics and implementation steps', undefined, context);
-
-      if (result.success) {
-        spinner.succeed(chalk.green('Build analysis completed by BuildOptimizer:'));
-        console.log('\n' + chalk.white(result.data.response));
+      if (response.success) {
+        terminal.hideSpinner();
+        console.log(chalk.cyan('\n🏗️  ArchMaster Response:'));
+        console.log(chalk.white(response.data.analysis));
         
-        if (result.data.performance_metrics) {
-          console.log(chalk.cyan('\n📊 Performance Metrics:'));
-          Object.entries(result.data.performance_metrics).forEach(([key, value]) => {
-            console.log(`  ${chalk.yellow(key)}: ${chalk.green(value)}`);
-          });
-        }
-
-        if (result.data.tokens_used) {
-          console.log(chalk.gray(`\nTokens used: ${result.data.tokens_used}`));
+        if (response.data.session_id) {
+          console.log(chalk.gray(`\nSession ID: ${response.data.session_id}`));
+          console.log(chalk.gray('Use --session flag to continue this conversation'));
         }
       } else {
-        spinner.fail(chalk.red(`Error: ${result.error}`));
+        terminal.hideSpinner();
+        console.error(chalk.red(`Error: ${response.error}`));
+        process.exit(1);
       }
     } catch (error: any) {
-      spinner.fail(chalk.red(`Error: ${error.message}`));
+      terminal.hideSpinner();
+      console.error(chalk.red(`Failed to communicate with ArchMaster: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// Build analysis command for BuildOptimizer (Agent #9)
+agentCommand
+  .command('build-analysis')
+  .description('Analyze and optimize build performance with BuildOptimizer')
+  .argument('<task>', 'Build optimization task description')
+  .option('-s, --session <id>', 'Session ID for conversation continuity')
+  .option('--context <context>', 'Additional context for build analysis')
+  .action(async (task: string, options: any) => {
+    const sessionId = options.session || agentCommand.opts().session;
+    
+    terminal.showSpinner('BuildOptimizer is analyzing your build performance...');
+    
+    try {
+      const context = options.context ? JSON.parse(options.context) : undefined;
+      const response = await api.callAgent(9, task, sessionId, context);
+      
+      if (response.success) {
+        terminal.hideSpinner();
+        console.log(chalk.cyan('\n⚡ BuildOptimizer Analysis:'));
+        console.log(chalk.white(response.data.analysis));
+        
+        if (response.data.optimization_results) {
+          console.log(chalk.green('\n📊 Optimization Results:'));
+          const results = response.data.optimization_results;
+          console.log(chalk.white(`Build Speed: ${results.build_speed_improvement}`));
+          console.log(chalk.white(`Bundle Size: ${results.bundle_size_reduction}`));
+          console.log(chalk.white(`Cache Efficiency: ${results.cache_efficiency}`));
+        }
+        
+        if (response.data.recommendations && response.data.recommendations.length > 0) {
+          console.log(chalk.yellow('\n💡 Recommendations:'));
+          response.data.recommendations.forEach((rec: string, index: number) => {
+            console.log(chalk.white(`${index + 1}. ${rec}`));
+          });
+        }
+        
+        if (response.data.session_id) {
+          console.log(chalk.gray(`\nSession ID: ${response.data.session_id}`));
+        }
+      } else {
+        terminal.hideSpinner();
+        console.error(chalk.red(`Error: ${response.error}`));
+        process.exit(1);
+      }
+    } catch (error: any) {
+      terminal.hideSpinner();
+      console.error(chalk.red(`Failed to communicate with BuildOptimizer: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// Accessibility audit command for AccessibilityChampion (Agent #10)
+agentCommand
+  .command('accessibility-audit')
+  .description('Perform comprehensive accessibility analysis with AccessibilityChampion')
+  .argument('<task>', 'Accessibility audit task description')
+  .option('-s, --session <id>', 'Session ID for conversation continuity')
+  .option('--context <context>', 'Additional context for accessibility analysis')
+  .action(async (task: string, options: any) => {
+    const sessionId = options.session || agentCommand.opts().session;
+    
+    terminal.showSpinner('AccessibilityChampion is performing comprehensive accessibility analysis...');
+    
+    try {
+      const context = options.context ? JSON.parse(options.context) : undefined;
+      const response = await api.callAgent(10, task, sessionId, context);
+      
+      if (response.success) {
+        terminal.hideSpinner();
+        console.log(chalk.cyan('\n♿ AccessibilityChampion Analysis:'));
+        console.log(chalk.white(response.data.analysis));
+        
+        if (response.data.accessibility_analysis) {
+          console.log(chalk.green('\n📊 Accessibility Metrics:'));
+          const analysis = response.data.accessibility_analysis;
+          console.log(chalk.white(`WCAG Compliance: ${analysis.wcag_compliance.score}%`));
+          console.log(chalk.white(`Screen Reader Compatibility: ${analysis.assistive_technology.screen_reader_compatibility}%`));
+          console.log(chalk.white(`Overall Accessibility Score: ${analysis.compliance_metrics.overall_score}%`));
+          console.log(chalk.white(`Legal Compliance: ${analysis.compliance_metrics.legal_compliance_status}`));
+        }
+        
+        if (response.data.recommendations && response.data.recommendations.length > 0) {
+          console.log(chalk.yellow('\n💡 Accessibility Recommendations:'));
+          response.data.recommendations.forEach((rec: string, index: number) => {
+            console.log(chalk.white(`${index + 1}. ${rec}`));
+          });
+        }
+        
+        if (response.data.next_steps && response.data.next_steps.length > 0) {
+          console.log(chalk.blue('\n🚀 Next Steps:'));
+          response.data.next_steps.forEach((step: string, index: number) => {
+            console.log(chalk.white(`${index + 1}. ${step}`));
+          });
+        }
+        
+        if (response.data.session_id) {
+          console.log(chalk.gray(`\nSession ID: ${response.data.session_id}`));
+        }
+      } else {
+        terminal.hideSpinner();
+        console.error(chalk.red(`Error: ${response.error}`));
+        process.exit(1);
+      }
+    } catch (error: any) {
+      terminal.hideSpinner();
+      console.error(chalk.red(`Failed to communicate with AccessibilityChampion: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
+// Generic agent command for other agents
+agentCommand
+  .command('call')
+  .description('Call a specific agent by number')
+  .argument('<agent-id>', 'Agent ID number')
+  .argument('<task>', 'Task description')
+  .option('-s, --session <id>', 'Session ID for conversation continuity')
+  .option('--context <context>', 'Additional context as JSON string')
+  .action(async (agentId: string, task: string, options: any) => {
+    const sessionId = options.session || agentCommand.opts().session;
+    const agentNumber = parseInt(agentId);
+    
+    if (isNaN(agentNumber)) {
+      console.error(chalk.red('Agent ID must be a number'));
+      process.exit(1);
+    }
+    
+    terminal.showSpinner(`Agent ${agentNumber} is processing your request...`);
+    
+    try {
+      const context = options.context ? JSON.parse(options.context) : undefined;
+      const response = await api.callAgent(agentNumber, task, sessionId, context);
+      
+      if (response.success) {
+        terminal.hideSpinner();
+        console.log(chalk.cyan(`\n🤖 Agent ${agentNumber} Response:`));
+        console.log(chalk.white(response.data.analysis || response.data.response));
+        
+        if (response.data.session_id) {
+          console.log(chalk.gray(`\nSession ID: ${response.data.session_id}`));
+        }
+      } else {
+        terminal.hideSpinner();
+        console.error(chalk.red(`Error: ${response.error}`));
+        process.exit(1);
+      }
+    } catch (error: any) {
+      terminal.hideSpinner();
+      console.error(chalk.red(`Failed to communicate with Agent ${agentNumber}: ${error.message}`));
+      process.exit(1);
     }
   });

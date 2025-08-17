@@ -100,12 +100,55 @@ export type Database = {
           },
         ]
       }
+      agent_file_access: {
+        Row: {
+          access_context: Json | null
+          access_type: string
+          accessed_at: string
+          agent_id: number
+          file_id: string
+          id: string
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          access_context?: Json | null
+          access_type: string
+          accessed_at?: string
+          agent_id: number
+          file_id: string
+          id?: string
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          access_context?: Json | null
+          access_type?: string
+          accessed_at?: string
+          agent_id?: number
+          file_id?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_file_access_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "user_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_memory: {
         Row: {
           agent_id: number
           context_tags: string[] | null
           created_at: string | null
           expires_at: string | null
+          file_context: Json | null
+          file_references: string[] | null
           id: string
           memory_key: string
           memory_type: string
@@ -119,6 +162,8 @@ export type Database = {
           context_tags?: string[] | null
           created_at?: string | null
           expires_at?: string | null
+          file_context?: Json | null
+          file_references?: string[] | null
           id?: string
           memory_key: string
           memory_type: string
@@ -132,6 +177,8 @@ export type Database = {
           context_tags?: string[] | null
           created_at?: string | null
           expires_at?: string | null
+          file_context?: Json | null
+          file_references?: string[] | null
           id?: string
           memory_key?: string
           memory_type?: string
@@ -615,6 +662,51 @@ export type Database = {
         }
         Relationships: []
       }
+      github_repositories: {
+        Row: {
+          branch: string | null
+          created_at: string
+          file_count: number | null
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          metadata: Json | null
+          repo_name: string
+          repo_url: string
+          sync_status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branch?: string | null
+          created_at?: string
+          file_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          repo_name: string
+          repo_url: string
+          sync_status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          branch?: string | null
+          created_at?: string
+          file_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          repo_name?: string
+          repo_url?: string
+          sync_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           configuration: Json
@@ -888,6 +980,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_files: {
+        Row: {
+          bucket_name: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          metadata: Json | null
+          mime_type: string
+          processed: boolean | null
+          processing_results: Json | null
+          processing_status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bucket_name: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          metadata?: Json | null
+          mime_type: string
+          processed?: boolean | null
+          processing_results?: Json | null
+          processing_status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bucket_name?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          metadata?: Json | null
+          mime_type?: string
+          processed?: boolean | null
+          processing_results?: Json | null
+          processing_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_llm_credentials: {
         Row: {

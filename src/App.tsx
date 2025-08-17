@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import FileManager from "./pages/FileManager";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,11 @@ const AppRoutes = () => {
         <Route path="/" element={
           <ProtectedRoute>
             <Index />
+          </ProtectedRoute>
+        } />
+        <Route path="/files" element={
+          <ProtectedRoute>
+            <FileManager />
           </ProtectedRoute>
         } />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

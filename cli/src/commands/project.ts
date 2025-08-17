@@ -22,7 +22,7 @@ ProjectCommand
     const projectName = options.name || 'New CodeXI Project';
     const projectDescription = options.description || 'A project managed by CodeXI agents';
 
-    const spinner = ora('Initializing project with ArchMaster...').start();
+    const spinner = ora('Initializing project with ArchMaster (Agent #11)...').start();
 
     try {
       const message = `Initialize a new project called "${projectName}" with description: "${projectDescription}". Set up the basic project structure and configuration.`;
@@ -42,7 +42,7 @@ ProjectCommand
 
 ProjectCommand
   .command('deploy')
-  .description('Deploy project using CloudOps agent')
+  .description('Deploy project - Note: CloudOps agent is not yet implemented')
   .option('-e, --environment <env>', 'Target environment (dev/staging/prod)', 'dev')
   .action(async (options) => {
     if (!config.isAuthenticated()) {
@@ -50,47 +50,26 @@ ProjectCommand
       return;
     }
 
-    const spinner = ora(`Deploying to ${options.environment} environment...`).start();
-
-    try {
-      const task = `Deploy the current project to ${options.environment} environment. Ensure proper CI/CD pipeline setup and deployment verification.`;
-      
-      const result = await api.callAgent(11, task); // CloudOps agent
-
-      if (result.success) {
-        spinner.succeed(chalk.green('Deployment completed successfully!'));
-        console.log('\n' + chalk.white(result.data.response));
-      } else {
-        spinner.fail(chalk.red(`Error: ${result.error}`));
-      }
-    } catch (error: any) {
-      spinner.fail(chalk.red(`Error: ${error.message}`));
-    }
+    console.log(chalk.yellow('Note: CloudOps agent deployment is not yet implemented.'));
+    console.log(chalk.gray('Available agents for deployment assistance:'));
+    console.log(chalk.gray('- Agent #9: BuildOptimizer (build optimization)'));
+    console.log(chalk.gray('- Agent #11: ArchMaster (architecture guidance)'));
+    console.log(chalk.gray('\nUse: codexi agent call <agent-number> "help with deployment to ' + options.environment + '"'));
   });
 
 ProjectCommand
   .command('analyze')
-  .description('Analyze project with ProjectAnalyzer agent')
+  .description('Analyze project - Note: ProjectAnalyzer agent is not yet implemented')
   .action(async () => {
     if (!config.isAuthenticated()) {
       console.log(chalk.red('Please login first: codexi auth login'));
       return;
     }
 
-    const spinner = ora('Analyzing project...').start();
-
-    try {
-      const task = 'Analyze the current project structure, dependencies, and provide recommendations for improvements, optimizations, and best practices.';
-      
-      const result = await api.callAgent(13, task); // ProjectAnalyzer agent
-
-      if (result.success) {
-        spinner.succeed(chalk.green('Project analysis completed!'));
-        console.log('\n' + chalk.white(result.data.response));
-      } else {
-        spinner.fail(chalk.red(`Error: ${result.error}`));
-      }
-    } catch (error: any) {
-      spinner.fail(chalk.red(`Error: ${error.message}`));
-    }
+    console.log(chalk.yellow('Note: ProjectAnalyzer agent is not yet implemented.'));
+    console.log(chalk.gray('Available agents for project analysis:'));
+    console.log(chalk.gray('- Agent #3: CodeArchitect (system architecture)'));
+    console.log(chalk.gray('- Agent #4: DebugWizard (performance debugging)'));
+    console.log(chalk.gray('- Agent #11: ArchMaster (comprehensive analysis)'));
+    console.log(chalk.gray('\nUse: codexi agent call <agent-number> "analyze my project"'));
   });

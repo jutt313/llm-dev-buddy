@@ -17,18 +17,16 @@ const ArchMasterManager = () => {
   });
 
   const { data: agentRegistry, isLoading, error } = useQuery({
-    queryKey: ['agent-registry', user?.id],
+    queryKey: ['agent-registry'],
     queryFn: async () => {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      const { data, error } = await supabase.functions.invoke('get-agent-registry', {
-        body: { user_id: user.id }
-      });
+      // Fetch all agents from the registry - using system-wide agents for now
+      const { data, error } = await supabase
+        .from('agent_registry')
+        .select('*')
+        .order('agent_number');
 
       if (error) {
-        console.error('Edge function error:', error);
+        console.error('Database error:', error);
         throw new Error(error.message || 'Failed to fetch agent registry');
       }
 
@@ -40,7 +38,6 @@ const ArchMasterManager = () => {
       console.log('Agent registry loaded successfully:', data);
       return data;
     },
-    enabled: !!user?.id,
     retry: 2,
     retryDelay: 1000,
   });
@@ -132,7 +129,7 @@ const ArchMasterManager = () => {
               <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Agents Found</h3>
               <p className="text-muted-foreground">
-                Your agent registry is empty. Ready to build Agent #19 (ValidationCore)?
+                No agents are currently registered in the system.
               </p>
             </div>
           </CardContent>
@@ -140,7 +137,7 @@ const ArchMasterManager = () => {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Agent Registry</CardTitle>
+            <CardTitle>Agent Registry ({totalAgents} Agents)</CardTitle>
             <CardDescription>Overview of all registered agents</CardDescription>
           </CardHeader>
           <CardContent>

@@ -18,23 +18,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { user_id } = await req.json()
-
-    if (!user_id) {
-      return new Response(
-        JSON.stringify({ error: 'user_id is required' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
-    // Query the agent_registry table
+    // For now, return all agents in the system regardless of user_id
+    // This will be updated later to support user-specific agents
     const { data, error } = await supabaseClient
       .from('agent_registry')
       .select('*')
-      .eq('user_id', user_id)
       .order('agent_number')
 
     if (error) {

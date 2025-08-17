@@ -13,7 +13,7 @@ export const agentCommand = new Command()
 // ArchMaster agent command
 agentCommand
   .command('archmaster')
-  .description('Chat with ArchMaster, the enterprise architecture and system design agent')
+  .description('Chat with ArchMaster (Agent #11), the enterprise architecture and system design agent')
   .argument('<message>', 'Message to send to ArchMaster')
   .option('-s, --session <id>', 'Session ID for conversation continuity')
   .action(async (message: string, options: any) => {
@@ -48,7 +48,7 @@ agentCommand
 // Build analysis command for BuildOptimizer (Agent #9)
 agentCommand
   .command('build-analysis')
-  .description('Analyze and optimize build performance with BuildOptimizer')
+  .description('Analyze and optimize build performance with BuildOptimizer (Agent #9)')
   .argument('<task>', 'Build optimization task description')
   .option('-s, --session <id>', 'Session ID for conversation continuity')
   .option('--context <context>', 'Additional context for build analysis')
@@ -65,21 +65,6 @@ agentCommand
         terminal.hideSpinner();
         console.log(chalk.cyan('\n⚡ BuildOptimizer Analysis:'));
         console.log(chalk.white(response.data.analysis));
-        
-        if (response.data.optimization_results) {
-          console.log(chalk.green('\n📊 Optimization Results:'));
-          const results = response.data.optimization_results;
-          console.log(chalk.white(`Build Speed: ${results.build_speed_improvement}`));
-          console.log(chalk.white(`Bundle Size: ${results.bundle_size_reduction}`));
-          console.log(chalk.white(`Cache Efficiency: ${results.cache_efficiency}`));
-        }
-        
-        if (response.data.recommendations && response.data.recommendations.length > 0) {
-          console.log(chalk.yellow('\n💡 Recommendations:'));
-          response.data.recommendations.forEach((rec: string, index: number) => {
-            console.log(chalk.white(`${index + 1}. ${rec}`));
-          });
-        }
         
         if (response.data.session_id) {
           console.log(chalk.gray(`\nSession ID: ${response.data.session_id}`));
@@ -99,7 +84,7 @@ agentCommand
 // Accessibility audit command for AccessibilityChampion (Agent #10)
 agentCommand
   .command('accessibility-audit')
-  .description('Perform comprehensive accessibility analysis with AccessibilityChampion')
+  .description('Perform comprehensive accessibility analysis with AccessibilityChampion (Agent #10)')
   .argument('<task>', 'Accessibility audit task description')
   .option('-s, --session <id>', 'Session ID for conversation continuity')
   .option('--context <context>', 'Additional context for accessibility analysis')
@@ -117,29 +102,6 @@ agentCommand
         console.log(chalk.cyan('\n♿ AccessibilityChampion Analysis:'));
         console.log(chalk.white(response.data.analysis));
         
-        if (response.data.accessibility_analysis) {
-          console.log(chalk.green('\n📊 Accessibility Metrics:'));
-          const analysis = response.data.accessibility_analysis;
-          console.log(chalk.white(`WCAG Compliance: ${analysis.wcag_compliance.score}%`));
-          console.log(chalk.white(`Screen Reader Compatibility: ${analysis.assistive_technology.screen_reader_compatibility}%`));
-          console.log(chalk.white(`Overall Accessibility Score: ${analysis.compliance_metrics.overall_score}%`));
-          console.log(chalk.white(`Legal Compliance: ${analysis.compliance_metrics.legal_compliance_status}`));
-        }
-        
-        if (response.data.recommendations && response.data.recommendations.length > 0) {
-          console.log(chalk.yellow('\n💡 Accessibility Recommendations:'));
-          response.data.recommendations.forEach((rec: string, index: number) => {
-            console.log(chalk.white(`${index + 1}. ${rec}`));
-          });
-        }
-        
-        if (response.data.next_steps && response.data.next_steps.length > 0) {
-          console.log(chalk.blue('\n🚀 Next Steps:'));
-          response.data.next_steps.forEach((step: string, index: number) => {
-            console.log(chalk.white(`${index + 1}. ${step}`));
-          });
-        }
-        
         if (response.data.session_id) {
           console.log(chalk.gray(`\nSession ID: ${response.data.session_id}`));
         }
@@ -155,12 +117,71 @@ agentCommand
     }
   });
 
+// List available agents command
+agentCommand
+  .command('list')
+  .description('List all available agents in the system')
+  .action(async () => {
+    terminal.showSpinner('Fetching agent registry...');
+    
+    try {
+      const response = await api.getAgentRegistry();
+      
+      if (response.success) {
+        terminal.hideSpinner();
+        const agents = response.data;
+        
+        console.log(chalk.cyan('\n🤖 Available Agents:\n'));
+        
+        if (agents.length === 0) {
+          console.log(chalk.yellow('No agents are currently registered in the system.'));
+          return;
+        }
+        
+        // Group agents by team
+        const agentsByTeam: Record<string, any[]> = {};
+        agents.forEach((agent: any) => {
+          const teamKey = `Team ${agent.team_number}: ${agent.team_name}`;
+          if (!agentsByTeam[teamKey]) {
+            agentsByTeam[teamKey] = [];
+          }
+          agentsByTeam[teamKey].push(agent);
+        });
+        
+        Object.entries(agentsByTeam).forEach(([teamName, teamAgents]) => {
+          console.log(chalk.blue(`\n${teamName}`));
+          console.log(chalk.blue('='.repeat(teamName.length)));
+          
+          teamAgents.forEach((agent: any) => {
+            const statusIcon = agent.is_active && agent.is_built ? '✅' : agent.is_built ? '⚠️ ' : '❌';
+            console.log(`${statusIcon} Agent #${agent.agent_number}: ${chalk.white(agent.agent_name)}`);
+            console.log(`   ${chalk.gray(agent.basic_role)}`);
+            console.log(`   Status: ${agent.is_active && agent.is_built ? chalk.green('Active') : agent.is_built ? chalk.yellow('Built but Inactive') : chalk.red('Not Built')}`);
+            console.log('');
+          });
+        });
+        
+        console.log(chalk.gray(`\nTotal: ${agents.length} agents registered`));
+        console.log(chalk.gray('Use "codexi agent call <agent-number> <task>" to interact with an agent'));
+        
+      } else {
+        terminal.hideSpinner();
+        console.error(chalk.red(`Error: ${response.error}`));
+        process.exit(1);
+      }
+    } catch (error: any) {
+      terminal.hideSpinner();
+      console.error(chalk.red(`Failed to fetch agent registry: ${error.message}`));
+      process.exit(1);
+    }
+  });
+
 // Generic agent command for other agents
 agentCommand
   .command('call')
   .description('Call a specific agent by number')
   .argument('<agent-id>', 'Agent ID number')
-  .argument('<task>', 'Task description')
+  .argument '<task>', 'Task description')
   .option('-s, --session <id>', 'Session ID for conversation continuity')
   .option('--context <context>', 'Additional context as JSON string')
   .action(async (agentId: string, task: string, options: any) => {
@@ -172,7 +193,7 @@ agentCommand
       process.exit(1);
     }
     
-    terminal.showSpinner(`Agent ${agentNumber} is processing your request...`);
+    terminal.showSpinner(`Agent #${agentNumber} is processing your request...`);
     
     try {
       const context = options.context ? JSON.parse(options.context) : undefined;
@@ -180,7 +201,7 @@ agentCommand
       
       if (response.success) {
         terminal.hideSpinner();
-        console.log(chalk.cyan(`\n🤖 Agent ${agentNumber} Response:`));
+        console.log(chalk.cyan(`\n🤖 Agent #${agentNumber} Response:`));
         console.log(chalk.white(response.data.analysis || response.data.response));
         
         if (response.data.session_id) {
@@ -193,7 +214,7 @@ agentCommand
       }
     } catch (error: any) {
       terminal.hideSpinner();
-      console.error(chalk.red(`Failed to communicate with Agent ${agentNumber}: ${error.message}`));
+      console.error(chalk.red(`Failed to communicate with Agent #${agentNumber}: ${error.message}`));
       process.exit(1);
     }
   });

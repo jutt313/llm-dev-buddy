@@ -38,15 +38,10 @@ const FileUploadManager = () => {
       const bucketName = fileType === 'screenshot' ? 'screenshots' : 
                         fileType === 'codebase' ? 'codebase-files' : 'user-uploads';
 
-      // Upload to storage
+      // Upload to storage with progress tracking
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(bucketName)
-        .upload(fileName, file, {
-          onUploadProgress: (progress) => {
-            const percentage = (progress.loaded / progress.total) * 100;
-            setUploadProgress(prev => ({ ...prev, [file.name]: percentage }));
-          }
-        });
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
@@ -73,8 +68,13 @@ const FileUploadManager = () => {
       if (dbError) throw dbError;
       return fileRecord;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['user-files'] });
+      setUploadProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[data.file_name];
+        return newProgress;
+      });
       toast({
         title: "File uploaded successfully",
         description: "Your file has been uploaded and is ready for agent processing.",
@@ -122,6 +122,20 @@ const FileUploadManager = () => {
     if (!files || files.length === 0) return;
 
     Array.from(files).forEach(file => {
+      // Simulate progress for UI feedback
+      setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
+      
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const currentProgress = prev[file.name] || 0;
+          if (currentProgress >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return { ...prev, [file.name]: currentProgress + 10 };
+        });
+      }, 200);
+
       uploadFileMutation.mutate({ file, fileType });
     });
   };
